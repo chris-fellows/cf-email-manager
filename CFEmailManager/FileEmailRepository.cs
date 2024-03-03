@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using CFEmailManager.Model;
 using CFUtilities.XML;
 
 namespace CFEmailManager
 {
+    /// <summary>
+    /// Email repository stored in local files
+    /// </summary>
     public class FileEmailRepository : IEmailRepository
     {
         private string _folder;
@@ -82,20 +83,27 @@ namespace CFEmailManager
 
         public List<EmailObject> Search(EmailSearch emailSearch)
         {
-            List<EmailObject> emails = new List<EmailObject>();
+            var emailResults = new List<EmailObject>();
 
-            return emails;
+            // Get all folders
+            var emailFolders = GetAllFolders();
+            
+            // Search each folder
+            foreach(var emailFolder in emailFolders)
+            {
+                emailResults.AddRange(Search(emailSearch, emailFolder));
+            }
+
+            return emailResults;
         }
 
         private List<EmailObject> Search(EmailSearch emailSearch, EmailFolder emailFolder)
         {
             List<EmailObject> emails = new List<EmailObject>();
             List<EmailObject> emailsToCheck = GetEmails(emailFolder);
-            foreach(var email in emailsToCheck)
-            {
 
-            }
-            return emails;
+            var emailResults = emailsToCheck.Where(email => emailSearch.IsMatches(email, emailFolder)).ToList();
+            return emailResults;
         }
     }
 }

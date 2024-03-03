@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using EAGetMail;
 using CFEmailManager.Model;
 
-namespace CFEmailManager
+namespace CFEmailManager.Utilities
 {
     internal class InternalUtilities
     {

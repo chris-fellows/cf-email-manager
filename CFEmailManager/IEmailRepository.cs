@@ -7,10 +7,21 @@ using CFEmailManager.Model;
 
 namespace CFEmailManager
 {
+    /// <summary>
+    /// Interface to repository storing emails
+    /// </summary>
     public interface IEmailRepository
     {
+        /// <summary>
+        /// Updates email folder with emails
+        /// </summary>
+        /// <param name="emailFolder"></param>
         void Update(EmailFolder emailFolder);
 
+        /// <summary>
+        /// Updates single email
+        /// </summary>
+        /// <param name="email"></param>
         void Update(EmailObject email);
 
         /// <summary>
@@ -33,6 +44,11 @@ namespace CFEmailManager
         /// <returns></returns>
         List<EmailObject> GetEmails(EmailFolder emailFolder);
 
+        /// <summary>
+        /// Searches for emails
+        /// </summary>
+        /// <param name="emailSearch"></param>
+        /// <returns></returns>
         List<EmailObject> Search(EmailSearch emailSearch);
     }
 }

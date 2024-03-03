@@ -49,20 +49,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ApplicationData.cs" />
     <Compile Include="Controls\EmailObjectControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Controls\EmailObjectControl.Designer.cs">
       <DependentUpon>EmailObjectControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="EmailDownloader.cs" />
+    <Compile Include="EmailConnections\EmailConnectionBase.cs" />
+    <Compile Include="EmailConnections\EmailConnectionImap.cs" />
+    <Compile Include="EmailConnections\EmailConnectionPop.cs" />
     <Compile Include="FileEmailRepository.cs" />
-    <Compile Include="InternalUtilities.cs" />
-    <Compile Include="MainForm.cs">
+    <Compile Include="EmailConnections\IEmailConnection.cs" />
+    <Compile Include="Utilities\InternalUtilities.cs" />
+    <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainForm.Designer.cs">
+    <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="IEmailRepository.cs" />
@@ -73,7 +75,10 @@
     <Compile Include="Model\EmailSearch.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="MainForm.resx">
+    <EmbeddedResource Include="Controls\EmailObjectControl.resx">
+      <DependentUpon>EmailObjectControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
