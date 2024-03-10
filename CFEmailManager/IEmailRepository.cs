@@ -22,7 +22,11 @@ namespace CFEmailManager
         /// Updates single email
         /// </summary>
         /// <param name="email"></param>
-        void Update(EmailObject email);
+        void Update(EmailObject email, byte[] emailContent, List<byte[]> attachments);
+
+       // string GetEmailFolderPath(EmailFolder emailFolder);
+
+        EmailFolder GetFolderByPath(string[] folderPath);
 
         /// <summary>
         /// Gets all email folders
@@ -50,5 +54,20 @@ namespace CFEmailManager
         /// <param name="emailSearch"></param>
         /// <returns></returns>
         List<EmailObject> Search(EmailSearch emailSearch);
+
+        /// <summary>
+        /// Gets email content
+        /// </summary>
+        /// <param name="emailObject"></param>
+        /// <returns></returns>
+        byte[] GetEmailContent(EmailObject emailObject);
+
+        /// <summary>
+        /// Gets email attachment content
+        /// </summary>
+        /// <param name="emailObject"></param>
+        /// <param name="attachmentIndex"></param>
+        /// <returns></returns>
+        byte[] GetEmailAttachmentContent(EmailObject emailObject, int attachmentIndex);
     }
 }

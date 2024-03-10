@@ -84,28 +84,18 @@ namespace CFEmailManager.EmailConnections
         /// <param name="folder"></param>
         /// <param name="localFolder"></param>
         /// <param name="downloadAttachments"></param>
-        protected void DownloadFolder(MailClient mailClient, Imap4Folder folder, string localFolder, bool downloadAttachments,
+        protected void DownloadFolder(MailClient mailClient, Imap4Folder folder, bool downloadAttachments,
                                     EmailFolder parentEmailFolder,
                                     IEmailRepository emailRepository,
+                                    List<string> folderNames,
                                      CancellationToken cancellationToken,
                                     Action<string> folderStartAction, Action<string> folderEndAction)
         {
             // Select folder
-            mailClient.SelectFolder(folder);
-
-            // Create local folder            
-            Directory.CreateDirectory(localFolder);
-
-            // Check if folder XML exists
-            EmailFolder emailFolder = null;
-            string folderXmlFile = "";
-            var folderXmlFiles = Directory.GetFiles(localFolder, "Folder.*.xml");
-            if (folderXmlFiles.Any())
-            {
-                folderXmlFile = folderXmlFiles.First();
-                emailFolder = XmlSerialization.DeserializeFromFile<EmailFolder>(folderXmlFile);
-                emailFolder.LocalFolder = localFolder;
-            }
+            mailClient.SelectFolder(folder);            
+            
+            // Check if folder XML exists            
+            EmailFolder emailFolder = emailRepository.GetFolderByPath(folderNames.ToArray());       
 
             if (emailFolder == null)   // Top level folder
             {
@@ -114,14 +104,13 @@ namespace CFEmailManager.EmailConnections
                     ID = Guid.NewGuid(),
                     ParentFolderID = (parentEmailFolder == null ? Guid.Empty : parentEmailFolder.ID),
                     Name = folder.Name,
-                    LocalFolder = localFolder,
-                    SyncEnabled = Array.IndexOf(new string[] { "Junk", "Spam", "Work" }, folder.Name) == -1,
+                    //LocalFolder = localFolder,
+                    SyncEnabled = Array.IndexOf(new string[] { "Junk", "Spam" }, folder.Name) == -1,
                     ExistsOnServer = true
                 };
 
                 // Save Folder.xml
-                folderXmlFile = string.Format(@"{0}\Folder.{1}.xml", localFolder, emailFolder.ID);
-                XmlSerialization.SerializeToFile(emailFolder, folderXmlFile);
+                emailRepository.Update(emailFolder);    // Sets LocalFolder property
             }
 
             // Set all child email folders as not existing on server so that we can check if it does exit
@@ -161,13 +150,13 @@ namespace CFEmailManager.EmailConnections
                     if (oldEmail == null)
                     {
                         // Save email to local folder
-                        SaveEmail(mail, localFolder, downloadAttachments, emailFolder);
+                        SaveEmail(mail, downloadAttachments, emailFolder, emailRepository);
                     }
                     else if (oldEmail.ExistsOnServer == false)
                     {
                         // Ensure that Email.ExistsOnServer=true
                         oldEmail.ExistsOnServer = true;
-                        emailRepository.Update(oldEmail);
+                        emailRepository.Update(oldEmail, new byte[0], new List<byte[]>());
                     }
 
                     if (cancellationToken.IsCancellationRequested)
@@ -182,8 +171,13 @@ namespace CFEmailManager.EmailConnections
                     List<string> subFolderNamesProcessed = new List<string>();
                     foreach (var subFolder in folder.SubFolders)
                     {
-                        string localSubFolder = Path.Combine(localFolder, subFolder.Name);
-                        DownloadFolder(mailClient, subFolder, localSubFolder, downloadAttachments, emailFolder, emailRepository, cancellationToken, folderStartAction, folderEndAction);
+                        //string localSubFolder = Path.Combine(localFolder, subFolder.Name);
+
+                        var newFolderNames = new List<string>();
+                        newFolderNames.AddRange(folderNames);
+                        newFolderNames.Add(subFolder.Name);
+
+                        DownloadFolder(mailClient, subFolder, downloadAttachments, emailFolder, emailRepository, newFolderNames, cancellationToken, folderStartAction, folderEndAction);
                         subFolderNamesProcessed.Add(subFolder.Name);
 
                         if (cancellationToken.IsCancellationRequested) break;                        
@@ -217,7 +211,7 @@ namespace CFEmailManager.EmailConnections
             foreach(var email in emails)
             {
                 email.ExistsOnServer = false;
-                emailRepository.Update(email);
+                emailRepository.Update(email, new byte[0], new List<byte[]>());
             }
 
             // Set sub-folders not on server
@@ -228,8 +222,9 @@ namespace CFEmailManager.EmailConnections
             }
         }
 
-        protected EmailObject SaveEmail(Mail mail, string localFolder, bool downloadAttachments,
-                                      EmailFolder emailFolder)
+        protected EmailObject SaveEmail(Mail mail, bool downloadAttachments,
+                                      EmailFolder emailFolder,
+                                      IEmailRepository emailRepository)
         {
             EmailObject emailObject = new EmailObject()
             {
@@ -240,13 +235,19 @@ namespace CFEmailManager.EmailConnections
                 SentDate = mail.SentDate,
                 ReceivedDate = mail.ReceivedDate,
                 ExistsOnServer = true
-            };            
+            };                        
 
             // Set file containing email
-            string emailFile = string.Format(@"{0}\Body.{1}.eml", localFolder, emailObject.ID);
+            //string emailFile = string.Format(@"{0}\Body.{1}.eml", localFolder, emailObject.ID);
+            string emailFile = Path.GetTempFileName();
 
-            // Save email                    
+            // Save email                                
             mail.SaveAs(emailFile, true);
+
+            var data = File.ReadAllBytes(emailFile);
+            File.Delete(emailFile);
+
+            List<byte[]> attachments = new List<byte[]>();
 
             // Save attachments to file [Email File].[Attachment Name]
             if (downloadAttachments && mail.Attachments != null && mail.Attachments.Any())
@@ -260,8 +261,12 @@ namespace CFEmailManager.EmailConnections
                         Name = attachment.Name
                     };
 
-                    string attachmentFile = Path.Combine(localFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, emailAttachment.ID));
-                    attachment.SaveAs(attachmentFile, true);
+                    // Download attachment
+                    //string attachmentFile = Path.Combine(localFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, emailAttachment.ID));
+                    string attachmentFile = Path.GetTempFileName();
+                    attachment.SaveAs(attachmentFile, true);                                        
+                    attachments.Add(File.ReadAllBytes(attachmentFile));
+                    File.Delete(attachmentFile);
 
                     emailObject.Attachments.Add(emailAttachment);
 
@@ -277,9 +282,10 @@ namespace CFEmailManager.EmailConnections
 
             // Mark email as deleted from POP3 server.
             //oClient.Delete(info);
-            
-            string emailXmlFile = string.Format(@"{0}\Email.{1}.xml", localFolder, emailObject.ID);
-            XmlSerialization.SerializeToFile(emailObject, emailXmlFile);            
+
+            //string emailXmlFile = string.Format(@"{0}\Email.{1}.xml", localFolder, emailObject.ID);
+            //XmlSerialization.SerializeToFile(emailObject, emailXmlFile);            
+            emailRepository.Update(emailObject, data, attachments);
 
             return emailObject;
         }

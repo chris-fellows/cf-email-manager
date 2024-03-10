@@ -11,6 +11,7 @@ using CFUtilities;
 using CFEmailManager.EmailConnections;
 using CFEmailManager.Model;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace CFEmailManager.Forms
 {
@@ -233,7 +234,7 @@ namespace CFEmailManager.Forms
             splitContainer2.Panel2.Controls.Clear();
 
             CFEmailManager.Controls.EmailObjectControl control = new CFEmailManager.Controls.EmailObjectControl();
-            control.SetParameters(emailFolder, email);
+            control.SetParameters(emailFolder, email, _emailRepository);
             control.Dock = DockStyle.Fill;
             control.Refresh();
             splitContainer2.Panel2.Controls.Add(control);
@@ -409,7 +410,14 @@ namespace CFEmailManager.Forms
         private void downloadEmailsToolStripMenuItem_Click(object sender, EventArgs e)
         {            
             EmailAccount emailAccount = (EmailAccount)tscbAccount.SelectedItem;
-            _downloadTask = DownloadEmailsAsync(emailAccount, true);            
+
+            /*
+            var emailFolders = _emailRepository.GetAllFolders();
+            var emailFolder = emailFolders.FirstOrDefault(em => em.Name == "Management Company");
+            var localFolder = _emailRepository.GetEmailFolderPath(emailFolder);
+            */
+
+            _downloadTask = DownloadEmailsAsync(emailAccount, true);                      
         }
 
         private void DisplayStatus(string status)

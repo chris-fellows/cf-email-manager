@@ -35,10 +35,8 @@ namespace CFEmailManager.EmailConnections
 
             var folders = mailClient.GetFolders();
             foreach (var folder in folders)
-            {
-                string localFolder = Path.Combine(downloadFolder, folder.Name);
-
-                DownloadFolder(mailClient, folder, localFolder, downloadAttachments, null, emailRepository, cancellationToken, folderStartAction, folderEndAction);
+            {                
+                DownloadFolder(mailClient, folder, downloadAttachments, null, emailRepository, new List<string>(), cancellationToken, folderStartAction, folderEndAction);
             }
 
             // Quit and expunge emails marked as deleted from POP3 server.

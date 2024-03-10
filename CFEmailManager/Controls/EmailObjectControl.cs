@@ -16,16 +16,18 @@ namespace CFEmailManager.Controls
     {
         private EmailFolder _emailFolder;
         private EmailObject _emailObject;
+        private IEmailRepository _emailRepository;
 
         public EmailObjectControl()
         {
             InitializeComponent();
         }
 
-        public void SetParameters(EmailFolder emailFolder, EmailObject emailObject)
+        public void SetParameters(EmailFolder emailFolder, EmailObject emailObject, IEmailRepository emailRepository)
         {
             _emailFolder = emailFolder;
             _emailObject = emailObject;
+            _emailRepository = emailRepository;
 
             ModelToView(emailFolder, emailObject);
         }
@@ -39,16 +41,16 @@ namespace CFEmailManager.Controls
             items.Insert(0, new NameValuePair<Guid>("<None>", Guid.Empty));
             cbAttachment.DisplayMember = nameof(NameValuePair<EmailAttachment>.Name);
             cbAttachment.ValueMember = nameof(NameValuePair<EmailAttachment>.Value);
-            cbAttachment.DataSource = items;
+            cbAttachment.DataSource = items;            
+            
+            // Display email body            
+            string tmpFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CFEmailManager.email.html");            
+            var emailData = _emailRepository.GetEmailContent(emailObject);
+            System.IO.File.WriteAllBytes(tmpFile, emailData);
 
-            // Display email body
-            string emailBodyFile = System.IO.Path.Combine(emailFolder.LocalFolder, string.Format("Body.{0}.eml", emailObject.ID));
-            string tmpFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CFEmailManager.email.html");
-            System.IO.File.Copy(emailBodyFile, tmpFile, true);
-
-            if (System.IO.File.Exists(emailBodyFile))
-            {
-                //wbEmail.Navigate("file://" + emailBodyFile.Replace(@"\\", @"//"));
+            //if (System.IO.File.Exists(emailBodyFile))
+            if (emailData != null && emailData.Length > 0)
+            {                
                 wbEmail.Visible = true;
                 wbEmail.Navigate("file://" + tmpFile.Replace(@"\\", @"//"));
             }
@@ -73,10 +75,11 @@ namespace CFEmailManager.Controls
 
         private string DownloadAttachment(EmailFolder emailFolder, EmailObject emailObject, EmailAttachment emailAttachment)                            
         {
-            string emailBodyFile = System.IO.Path.Combine(_emailFolder.LocalFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, emailAttachment.ID));
+            //string emailBodyFile = System.IO.Path.Combine(_emailFolder.LocalFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, emailAttachment.ID));
             string localFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), emailAttachment.Name);
-            System.IO.File.Copy(emailBodyFile, localFile, true);            
-
+            //System.IO.File.Copy(emailBodyFile, localFile, true);            
+            var attachmentContent = _emailRepository.GetEmailAttachmentContent(emailObject, emailObject.Attachments.IndexOf(emailAttachment));
+            System.IO.File.WriteAllBytes(localFile, attachmentContent);
             return localFile;
         }
 
