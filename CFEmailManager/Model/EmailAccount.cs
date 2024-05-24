@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CFEmailManager.Model
+﻿namespace CFEmailManager.Model
 {
+    /// <summary>
+    /// Email account details
+    /// </summary>
     public class EmailAccount
     {
         public string Server { get; set; }

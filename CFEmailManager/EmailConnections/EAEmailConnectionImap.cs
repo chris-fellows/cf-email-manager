@@ -6,14 +6,17 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CFEmailManager.Interfaces;
 
 namespace CFEmailManager.EmailConnections
 {
     /// <summary>
     /// Email downloader via Imap
     /// </summary>
-    internal class EmailConnectionImap : EmailConnectionBase, IEmailConnection
+    internal class EAEmailConnectionImap : EAEmailConnectionBase, IEmailConnection
     {
+        public string ServerType => "IMAP";
+
         public void Download(string server, string username, string password, string downloadFolder,
                             bool downloadAttachments, IEmailRepository emailRepository,
                              CancellationToken cancellationToken,

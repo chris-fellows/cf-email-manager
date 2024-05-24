@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace CFEmailManager.EmailConnections
+namespace CFEmailManager.Interfaces
 {
     /// <summary>
     /// Email server connection
     /// </summary>
-    internal interface IEmailConnection
+    public interface IEmailConnection
     {
+        string ServerType { get; }
+
         /// <summary>
         /// Downloads emails to local
         /// </summary>

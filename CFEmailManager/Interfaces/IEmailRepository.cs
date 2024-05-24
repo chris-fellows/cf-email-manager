@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using CFEmailManager.Model;
 
-namespace CFEmailManager
+namespace CFEmailManager.Interfaces
 {
     /// <summary>
     /// Interface to repository storing emails
     /// </summary>
     public interface IEmailRepository
-    {
+    {        
+        string EmailAddress { get; }
+
         /// <summary>
         /// Updates email folder with emails
         /// </summary>

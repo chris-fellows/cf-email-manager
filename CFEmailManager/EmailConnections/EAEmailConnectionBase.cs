@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using EAGetMail;
+using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFEmailManager.Utilities;
 using CFUtilities.XML;
@@ -15,7 +16,7 @@ namespace CFEmailManager.EmailConnections
     /// <summary>
     /// Downloads emails via POP3
     /// </summary>
-    public abstract class EmailConnectionBase
+    public abstract class EAEmailConnectionBase
     {
         ///// <summary>
         ///// Downloads emails via POP

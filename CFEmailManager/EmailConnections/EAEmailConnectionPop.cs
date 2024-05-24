@@ -1,20 +1,18 @@
 ﻿using EAGetMail;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using CFEmailManager.Interfaces;
 
 namespace CFEmailManager.EmailConnections
 {
     /// <summary>
     /// Email downloader via POP3
     /// </summary>
-    internal class EmailConnectionPop : EmailConnectionBase, IEmailConnection
+    internal class EAEmailConnectionPop : EAEmailConnectionBase, IEmailConnection
     {
+        public string ServerType => "POP";
+
         public void Download(string server, string username, string password, string downloadFolder,
                             bool downloadAttachments, IEmailRepository emailRepository,
                              CancellationToken cancellationToken,

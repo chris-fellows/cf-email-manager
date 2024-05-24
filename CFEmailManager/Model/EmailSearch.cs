@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace CFEmailManager.Model
 {
+    /// <summary>
+    /// Email search parameters
+    /// </summary>
     public class EmailSearch
     {
         /// <summary>

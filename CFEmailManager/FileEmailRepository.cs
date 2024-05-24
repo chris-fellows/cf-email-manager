@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFUtilities.XML;
-using System.Text;
-using System.Drawing.Drawing2D;
-using System.Runtime.InteropServices;
 
 namespace CFEmailManager
 {
@@ -16,12 +14,16 @@ namespace CFEmailManager
     public class FileEmailRepository : IEmailRepository
     {
         private string _folder;
+        private string _emailAddress;
 
-        public FileEmailRepository(string folder)
+        public FileEmailRepository(string emailAddress, string folder)
         {
+            _emailAddress = emailAddress;
             _folder = folder;
             Directory.CreateDirectory(_folder);
         }
+
+        public string EmailAddress => _emailAddress;
 
         /// <summary>
         /// Gets the local folder path for the folder object
