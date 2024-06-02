@@ -16,15 +16,51 @@ namespace CFEmailManager.Model
         [XmlAttribute("Subject")]
         public string Subject { get; set; }
 
-        [XmlAttribute("SenderAddress")]
-        public string SenderAddress { get; set; }
+        [XmlAttribute("Priority")]
+        public string Priority { get; set; }
 
-        [XmlAttribute("SentDate")]
-        public DateTime SentDate { get; set; }
+        [XmlElement("From")]
+        public EmailAddress From { get; set; }
 
-        [XmlAttribute("ReceivedDate")]
-        public DateTime ReceivedDate { get; set; }
+        [XmlArray("To")]
+        [XmlArrayItem("Item")]
+        public List<EmailAddress> To { get; set; }
 
+        [XmlArray("CC")]
+        [XmlArrayItem("Item")]
+        public List<EmailAddress> CC { get; set; }
+
+        [XmlArray("BCC")]
+        [XmlArrayItem("Item")]
+        public List<EmailAddress> BCC { get; set; }
+
+        [XmlArray("ReplyTo")]
+        [XmlArrayItem("Item")]
+        public List<EmailAddress> ReplyTo { get; set; }
+
+        [XmlIgnore]     // Cannot XML serialize a DateTimeOffset
+        public DateTimeOffset SentDate { get; set; }
+
+        [XmlElement("SentDate")]
+        public string SentDateForForXml // format: 2011-11-11T15:05:46.4733406+01:00
+        {
+            get { return SentDate.ToString("o"); } // o = yyyy-MM-ddTHH:mm:ss.fffffffzzz
+            set { SentDate = DateTimeOffset.Parse(value); }
+        }
+
+        [XmlIgnore]    // Cannot XML serialize a DateTimeOffset
+        public DateTimeOffset ReceivedDate { get; set; }
+
+        [XmlElement("ReceivedDate")]
+        public string ReceivedDateForXml // format: 2011-11-11T15:05:46.4733406+01:00
+        {
+            get { return ReceivedDate.ToString("o"); } // o = yyyy-MM-ddTHH:mm:ss.fffffffzzz
+            set { ReceivedDate = DateTimeOffset.Parse(value); }
+        }
+
+        /// <summary>
+        /// Whether email exists on server. Used for reporting.
+        /// </summary>
         [XmlAttribute("ExistsOnServer")]
         public bool ExistsOnServer { get; set; }
 

@@ -19,14 +19,9 @@ namespace CFEmailManager.Model
         public bool SyncEnabled { get; set; }
 
         /// <summary>
-        /// Whether the folder exists on the server when sync'd. Allows us to identify folders that have
-        /// been subsequently deleted.
+        /// Whether the folder exists on the server
         /// </summary>
         [XmlAttribute("ExistsOnServer")]
         public bool ExistsOnServer { get; set; }
-
-        // Don't serialize
-        [XmlIgnore]
-        public string LocalFolder { get; set; }
     }
 }

@@ -13,14 +13,14 @@ namespace CFEmailManager.Controls
     {
         private EmailFolder _emailFolder;
         private EmailObject _emailObject;
-        private IEmailRepository _emailRepository;
+        private IEmailStorageService _emailRepository;
 
         public EmailObjectControl()
         {
             InitializeComponent();
         }
 
-        public void SetParameters(EmailFolder emailFolder, EmailObject emailObject, IEmailRepository emailRepository)
+        public void SetParameters(EmailFolder emailFolder, EmailObject emailObject, IEmailStorageService emailRepository)
         {
             _emailFolder = emailFolder;
             _emailObject = emailObject;

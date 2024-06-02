@@ -6,22 +6,21 @@ using System.Threading.Tasks;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 
-namespace CFEmailManager
+namespace CFEmailManager.Services
 {
-    public class EmailDownloader : IEmailDownloader
+    public class EmailDownloaderService : IEmailDownloaderService
     {
-        private readonly IEnumerable<IEmailConnection> _emailConnections;
-        //private readonly IEnumerable<IEmailRepository> _emailRepositories;
-
+        private readonly IEnumerable<IEmailConnection> _emailConnections;        
         private CancellationTokenSource _downloadTaskTokenSource;
 
-        public EmailDownloader(IEnumerable<IEmailConnection> emailConnections)                                
+        public EmailDownloaderService(IEnumerable<IEmailConnection> emailConnections)                                
         {
             _emailConnections = emailConnections;          
         }   
 
         public Task DownloadEmailsAsync(EmailAccount emailAccount,
-                        IEmailRepository emailRepository,
+                        IEmailStorageService emailRepository,
+                        bool downloadAttachments,
                         Action<string> actionFolderStart,
                         Action<string> actionFolderEnd,
                         Action downloadStart,
@@ -37,12 +36,9 @@ namespace CFEmailManager
                 // Get email connection                
                 var emailConnection = _emailConnections.First(ec => ec.ServerType == emailAccount.ServerType);
 
-                // Download            
-                //var emailRepository = _emailRepositories.First(er => er.EmailAddress == emailAccount.EmailAddress);
-
-                //emailConnection.DownloadViaImap("imap-mail.outlook.com", emailAccount.EmailAddress, emailAccount.Password, emailAccount.LocalFolder, true, emailRepository);
+                // Download                
                 emailConnection.Download(emailAccount.Server, emailAccount.EmailAddress, emailAccount.Password,
-                                emailAccount.LocalFolder, true, emailRepository, _downloadTaskTokenSource.Token,
+                                emailAccount.LocalFolder, downloadAttachments, emailRepository, _downloadTaskTokenSource.Token,
                                 (folder) => // Main thread
                                 {
                                     actionFolderStart(folder);

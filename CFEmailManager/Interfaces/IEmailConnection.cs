@@ -21,7 +21,7 @@ namespace CFEmailManager.Interfaces
         /// <param name="emailRepository"></param>
         /// <param name="folderStartAction"></param>
         /// <param name="folderEndAction"></param>
-        void Download(string server, string username, string password, string downloadFolder, bool downloadAttachments, IEmailRepository emailRepository,
+        void Download(string server, string username, string password, string downloadFolder, bool downloadAttachments, IEmailStorageService emailRepository,
                      CancellationToken cancellationToken,
                      Action<string> folderStartAction = null, Action<string> folderEndAction = null);
     }

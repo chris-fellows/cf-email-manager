@@ -33,8 +33,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EAGetMail, Version=5.0.0.1, Culture=neutral, PublicKeyToken=e10a0812eb29cf94, processorArchitecture=MSIL">
-      <HintPath>packages\EAGetMail.5.0.0.1\lib\net45\EAGetMail.dll</HintPath>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>packages\BouncyCastle.Cryptography.2.3.1\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
+    <Reference Include="MailKit, Version=4.6.0.0, Culture=neutral, PublicKeyToken=4e064fe7c44a8f1b, processorArchitecture=MSIL">
+      <HintPath>packages\MailKit.4.6.0\lib\net48\MailKit.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -120,6 +123,9 @@
     <Reference Include="Microsoft.Extensions.Primitives, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.Primitives.8.0.0\lib\net462\Microsoft.Extensions.Primitives.dll</HintPath>
     </Reference>
+    <Reference Include="MimeKit, Version=4.6.0.0, Culture=neutral, PublicKeyToken=bede1c8a46c66814, processorArchitecture=MSIL">
+      <HintPath>packages\MimeKit.4.6.0\lib\net48\MimeKit.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
@@ -128,6 +134,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Diagnostics.DiagnosticSource.8.0.0\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Formats.Asn1, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Formats.Asn1.8.0.0\lib\net462\System.Formats.Asn1.dll</HintPath>
     </Reference>
     <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
@@ -140,6 +149,7 @@
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
+    <Reference Include="System.Security" />
     <Reference Include="System.Text.Encodings.Web, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Text.Encodings.Web.8.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
     </Reference>
@@ -163,21 +173,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigEmailAccountRepository.cs" />
+    <Compile Include="Model\EmailAddress.cs" />
+    <Compile Include="Services\EmailAccountService.cs" />
     <Compile Include="Controls\EmailObjectControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Controls\EmailObjectControl.Designer.cs">
       <DependentUpon>EmailObjectControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="EmailConnections\EAEmailConnectionBase.cs" />
-    <Compile Include="EmailConnections\EAEmailConnectionImap.cs" />
-    <Compile Include="EmailConnections\EAEmailConnectionPop.cs" />
-    <Compile Include="EmailDownloader.cs" />
-    <Compile Include="FileEmailRepository.cs" />
-    <Compile Include="Interfaces\IEmailAccountRepository.cs" />
+    <Compile Include="EmailConnections\MailKit\MKEmailConnectionImap.cs" />
+    <Compile Include="EmailConnections\MailKit\MKTest.cs" />
+    <Compile Include="Services\EmailDownloaderService.cs" />
+    <Compile Include="Services\FileEmailStorageService.cs" />
+    <Compile Include="Interfaces\IEmailAccountService.cs" />
     <Compile Include="Interfaces\IEmailConnection.cs" />
-    <Compile Include="Interfaces\IEmailDownloader.cs" />
+    <Compile Include="Interfaces\IEmailDownloaderService.cs" />
     <Compile Include="Utilities\AesEncryptionUtilities.cs" />
     <Compile Include="Utilities\InternalUtilities.cs" />
     <Compile Include="Forms\MainForm.cs">
@@ -186,7 +196,7 @@
     <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Interfaces\IEmailRepository.cs" />
+    <Compile Include="Interfaces\IEmailStorageService.cs" />
     <Compile Include="Model\EmailAccount.cs" />
     <Compile Include="Model\EmailAttachment.cs" />
     <Compile Include="Model\EmailFolder.cs" />

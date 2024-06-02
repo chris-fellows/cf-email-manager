@@ -4,7 +4,10 @@ using CFEmailManager.Model;
 
 namespace CFEmailManager.Interfaces
 {
-    public interface IEmailAccountRepository
+    /// <summary>
+    /// Service for list of email accounts
+    /// </summary>
+    public interface IEmailAccountService
     {
         List<EmailAccount> GetAll();
     }

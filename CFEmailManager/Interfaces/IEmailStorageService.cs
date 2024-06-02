@@ -6,7 +6,7 @@ namespace CFEmailManager.Interfaces
     /// <summary>
     /// Interface to repository storing emails
     /// </summary>
-    public interface IEmailRepository
+    public interface IEmailStorageService
     {        
         string EmailAddress { get; }
 
@@ -20,11 +20,14 @@ namespace CFEmailManager.Interfaces
         /// Updates single email
         /// </summary>
         /// <param name="email"></param>
-        void Update(EmailObject email, byte[] emailContent, List<byte[]> attachments);
+        void Update(EmailObject email, byte[] content, List<byte[]> attachments);
 
-       // string GetEmailFolderPath(EmailFolder emailFolder);
-
-        EmailFolder GetFolderByPath(string[] folderPath);
+        /// <summary>
+        /// Gets folder by path. E.g. ["Projects","ProjectXY","Sent"]
+        /// </summary>
+        /// <param name="folderNames"></param>
+        /// <returns></returns>
+        EmailFolder GetFolderByPath(string[] folderNames);
 
         /// <summary>
         /// Gets all email folders
@@ -33,14 +36,14 @@ namespace CFEmailManager.Interfaces
         List<EmailFolder> GetAllFolders();
 
         /// <summary>
-        /// Gets all email folders that are children of the email folder
+        /// Gets all email folders that are immediate children of the email folder
         /// </summary>
         /// <param name="emailFolder"></param>
         /// <returns></returns>
         List<EmailFolder> GetChildFolders(EmailFolder emailFolder);
 
         /// <summary>
-        /// Returns all emails in folder
+        /// Returns all emails in folder. Not sub-folders.
         /// </summary>
         /// <param name="emailFolder"></param>
         /// <returns></returns>
@@ -67,5 +70,12 @@ namespace CFEmailManager.Interfaces
         /// <param name="attachmentIndex"></param>
         /// <returns></returns>
         byte[] GetEmailAttachmentContent(EmailObject emailObject, int attachmentIndex);
+
+        /// <summary>
+        /// Sets folder, all sub-folders and all emails as not on the server. Typically the status will be changed
+        /// later when we verify that the folder/email exists.
+        /// </summary>
+        /// <param name="emailFolder"></param>
+        void SetNotExistsOnServer(EmailFolder emailFolder);
     }
 }

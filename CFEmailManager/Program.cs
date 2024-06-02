@@ -9,6 +9,8 @@ using CFEmailManager.Forms;
 using System.IO;
 using System.Reflection;
 using CFEmailManager.Interfaces;
+using CFEmailManager.EmailConnections.MailKit;
+using CFEmailManager.Services;
 
 namespace CFEmailManager
 {
@@ -47,6 +49,8 @@ namespace CFEmailManager
         /// <returns></returns>
         static IHostBuilder CreateHostBuilder()
         {
+            //new MKTest().Test();
+
             // Get path to executable
             string currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
@@ -64,17 +68,17 @@ namespace CFEmailManager
                     //
 
                     // Regiter IEmailRepository for each email account
-                    var emailAccounts = new ConfigEmailAccountRepository().GetAll();
+                    var emailAccounts = new EmailAccountService().GetAll();
                     foreach(var emailAccount in emailAccounts)
                     {
-                        services.AddTransient<IEmailRepository>((scope) =>
+                        services.AddTransient<IEmailStorageService>((scope) =>
                         {
-                            return new FileEmailRepository(emailAccount.EmailAddress, emailAccount.LocalFolder);
+                            return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder);
                         });
                     }
-                    services.AddTransient<IEmailDownloader, EmailDownloader>();
-                    services.AddTransient<IEmailAccountRepository, ConfigEmailAccountRepository>();
-                    services.RegisterAllTypes<IEmailConnection>(new[] { Assembly.GetExecutingAssembly() });
+                    services.AddTransient<IEmailDownloaderService, EmailDownloaderService>();
+                    services.AddTransient<IEmailAccountService, EmailAccountService>();
+                    services.RegisterAllTypes<IEmailConnection>(new[] { Assembly.GetExecutingAssembly() });                    
                     services.AddTransient<MainForm>();
                 });
         }

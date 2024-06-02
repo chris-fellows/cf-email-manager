@@ -33,7 +33,9 @@ namespace CFEmailManager.Model
         /// </summary>
         public bool SearchAttachments { get; set; }
 
-        public bool IsMatches(EmailObject emailObject, EmailFolder emailFolder)
+        public bool IsMatches(EmailObject emailObject, EmailFolder emailFolder,
+                              Func<string> getBodyString)                              
+            
         {
             bool isMatches = true;
             if (isMatches && emailObject.ReceivedDate < this.MinReceivedDate)
@@ -55,7 +57,7 @@ namespace CFEmailManager.Model
             {                
                 int countMatches = 0;
 
-                if (countMatches == 0 && emailObject.SenderAddress.ToLower().Contains(this.TextToFind.ToLower()))
+                if (countMatches == 0 && emailObject.From.Address.ToLower().Contains(this.TextToFind.ToLower()))
                 {
                     countMatches++;
                 }
@@ -65,36 +67,46 @@ namespace CFEmailManager.Model
                     countMatches++;
                 }
 
-                // Check attachments
-                if (countMatches == 0 && emailObject.Attachments != null && this.SearchAttachments)
+                //// Check attachments
+                //if (countMatches == 0 && emailObject.Attachments != null && this.SearchAttachments)
+                //{
+                //    foreach(var attachment in emailObject.Attachments)
+                //    {
+                //        string attachmentFile = Path.Combine(emailFolder.LocalFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, attachment.ID));
+                //        if (File.Exists(attachmentFile))
+                //        {
+                //            string attachmentBody = File.ReadAllText(attachmentFile);
+                //            if (attachmentBody.ToLower().Contains(this.TextToFind.ToLower()))
+                //            {
+                //                countMatches++;
+                //            }
+                //        }
+                //        if (countMatches > 0)
+                //        {
+                //            break;
+                //        }
+                //    }
+                //}
+
+                // Search body
+                if (countMatches == 0)
                 {
-                    foreach(var attachment in emailObject.Attachments)
-                    {
-                        string attachmentFile = Path.Combine(emailFolder.LocalFolder, string.Format("Attachment.{0}.{1}", emailObject.ID, attachment.ID));
-                        if (File.Exists(attachmentFile))
-                        {
-                            string attachmentBody = File.ReadAllText(attachmentFile);
-                            if (attachmentBody.ToLower().Contains(this.TextToFind.ToLower()))
-                            {
-                                countMatches++;
-                            }
-                        }
-                        if (countMatches > 0)
-                        {
-                            break;
-                        }
-                    }
-                }
-              
-                string emailFile = Path.Combine(emailFolder.LocalFolder, string.Format("{0}.eml", emailObject.ID));
-                if (countMatches == 0 && File.Exists(emailFile))
-                {
-                    string emailBody = File.ReadAllText(emailFile);
+                    var emailBody = getBodyString();
                     if (emailBody.ToLower().Contains(this.TextToFind.ToLower()))
                     {
                         countMatches++;
                     }
                 }
+              
+                //string emailFile = Path.Combine(emailFolder.LocalFolder, string.Format("{0}.eml", emailObject.ID));
+                //if (countMatches == 0 && File.Exists(emailFile))
+                //{
+                //    string emailBody = File.ReadAllText(emailFile);
+                //    if (emailBody.ToLower().Contains(this.TextToFind.ToLower()))
+                //    {
+                //        countMatches++;
+                //    }
+                //}
 
                 isMatches = (countMatches > 0);
             }

@@ -7,7 +7,7 @@ namespace CFEmailManager
     /// <summary>
     /// Email account repository from config file
     /// </summary>
-    public class ConfigEmailAccountRepository : IEmailAccountRepository
+    public class EmailAccountService : IEmailAccountService
     {
         public List<EmailAccount> GetAll()
         {
