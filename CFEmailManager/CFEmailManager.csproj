@@ -173,7 +173,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\EmailSummaryListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\EmailSummaryListControl.Designer.cs">
+      <DependentUpon>EmailSummaryListControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Model\EmailAddress.cs" />
+    <Compile Include="Model\EmailDownloadStatistics.cs" />
     <Compile Include="Services\EmailAccountService.cs" />
     <Compile Include="Controls\EmailObjectControl.cs">
       <SubType>UserControl</SubType>
@@ -206,6 +213,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Controls\EmailObjectControl.resx">
       <DependentUpon>EmailObjectControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\EmailSummaryListControl.resx">
+      <DependentUpon>EmailSummaryListControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>

@@ -1,43 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CFUtilities;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
-using System.Threading;
-using System.Runtime.InteropServices;
+using CFEmailManager.Controls;
 
 namespace CFEmailManager.Forms
 {
     /// <summary>
-    /// Main form
+    /// Main form. Displays email folders. User can select folder and browse emails within folder    
     /// </summary>
     public partial class MainForm : Form
-    {
-        //private ApplicationData _applicationData;
+    {      
         private readonly IEmailAccountService _emailAccountRepository;
         private readonly IEmailDownloaderService _emailDownloader;
         private readonly IEnumerable<IEmailConnection> _emailConnections;
-        private readonly IEnumerable<IEmailStorageService> _emailRepositories;
+        private readonly IEnumerable<IEmailStorageService> _emailStorageServices;
         
-        private Task _downloadTask;
-        //private CancellationTokenSource _downloadTaskTokenSource;        
+        private Task<EmailDownloadStatistics> _downloadEmailsTask;     // Active download task
 
         public MainForm(IEmailAccountService emailAccountRepository,
                         IEnumerable<IEmailConnection> emailConnections,
                         IEmailDownloaderService emailDownloader,
-                        IEnumerable<IEmailStorageService> emailRepositories)
+                        IEnumerable<IEmailStorageService> emailStorageServices)
         {
             _emailAccountRepository = emailAccountRepository;
             _emailConnections = emailConnections;
             _emailDownloader = emailDownloader;
-            _emailRepositories = emailRepositories;
+            _emailStorageServices = emailStorageServices;
 
             InitializeComponent();
         }
@@ -48,20 +41,30 @@ namespace CFEmailManager.Forms
         }
 
 
-        private IEmailStorageService SelectedEmailRepository
+        private IEmailStorageService SelectedEmailStorageService
         {
-            get { return _emailRepositories.First(er => er.EmailAddress == SelectedEmailAccount.EmailAddress); }
+            get { return _emailStorageServices.First(er => er.EmailAddress == SelectedEmailAccount.EmailAddress); }
+        }
+
+        /// <summary>
+        /// Email summary list control if loaded
+        /// </summary>
+        private EmailSummaryListControl EmailSummaryListControl
+        {
+            get
+            {
+                if (splitContainer2.Panel1.Controls[0] is EmailSummaryListControl)
+                {
+                    return (EmailSummaryListControl)splitContainer2.Panel1.Controls[0];
+                }
+                return null;
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
-        {
-
-            //_applicationData = GetApplicationData();
-
-            //DownloadEmails();
+        {            
             DisplayStatus("Initializing");
-            //DisplayEmailFolders();
-
+            
             InitializeScreen();
 
             DisplayStatus("Ready");
@@ -71,73 +74,53 @@ namespace CFEmailManager.Forms
         }
 
         private void InitializeScreen()
-        {
-            //int count = 0;
-            //List<EmailAccount> emailAccounts = new List<EmailAccount>();
-            //do
-            //{
-            //    count++;
-            //    if (System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.EmailAddress", count)) != null)
-            //    { 
-            //        string emailAddress = System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.EmailAddress", count)).ToString();                
-            //        EmailAccount emailAccount = new EmailAccount()
-            //        {
-            //            EmailAddress = emailAddress,
-            //            Password = System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.Password", count)).ToString(),
-            //            LocalFolder = System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.LocalEmailFolder", count)).ToString(),
-            //            Server = System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.Server", count)).ToString(),
-            //            ServerType = System.Configuration.ConfigurationSettings.AppSettings.Get(string.Format("EmailAccount.{0}.ServerType", count)).ToString()
-            //        };
-            //        emailAccounts.Add(emailAccount);
-            //    }
-            //    else
-            //    {
-            //        count = -1;
-            //    }
-            //} while (count > 0);
-
+        {            
+            // Default
+            DisplayEmailSummaryListControl();   
+            
+            // Display email accounts
             var emailAccounts = _emailAccountRepository.GetAll();
             tscbAccount.ComboBox.ValueMember = nameof(EmailAccount.EmailAddress);
             tscbAccount.ComboBox.DisplayMember = nameof(EmailAccount.EmailAddress);
-            tscbAccount.ComboBox.DataSource = emailAccounts;
+            tscbAccount.ComboBox.DataSource = emailAccounts;         
         }
-        
-    
-        //private ApplicationData GetApplicationData(EmailAccount emailAccount)
-        //{
-        //    //string localEmailFolder = @"C:\Data\Dev\C#\CFEmailManager\bin\Debug\Emails";
-        //   // string localEmailFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LocalEmailFolder").ToString();
 
-        //    var applicationData = new ApplicationData();
-        //    applicationData.EmailRepository = new FileEmailRepository(emailAccount.LocalFolder);
-        //    return applicationData;
-        //}
+        private void DisplayEmailSummaryListControl()
+        {            
+            var control = new EmailSummaryListControl();
+            control.Dock = DockStyle.Fill;
+            control.OnEmailSelected += EmailSummaryListControl_OnEmailSelected;
+            control.OnNoEmailSelected += EmailSummaryListControl_OnNoEmailSelected;
+            splitContainer2.Panel1.Controls.Clear();
+            splitContainer2.Panel1.Controls.Add(control);
+        }
 
-        //private void RunSearch(EmailSearch emailSearch)
-        //{
-        //    var emails = SelectedEmailRepository.Search(emailSearch);
+        private void EmailSummaryListControl_OnNoEmailSelected()
+        {
+            DisplayNoEmail();   
+        }
 
-        //    DisplayEmails(emails);           
-        //}
-
+        private void EmailSummaryListControl_OnEmailSelected(EmailFolder emailFolder, EmailObject emailObject)
+        {
+            DisplayEmail(emailFolder, emailObject);
+        }
+      
+        /// <summary>
+        /// Displays email folders for email account
+        /// </summary>
+        /// <param name="emailAccount"></param>
         private void DisplayEmailFolders(EmailAccount emailAccount)
         {
-            tvwEmails.Nodes.Clear();
-            dgvEmail.Rows.Clear();
-            dgvEmail.Columns.Clear();
-            //wbEmail.Visible = false;
+            tvwEmailFolders.Nodes.Clear();
+          
+            var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
 
-            //_applicationData = GetApplicationData(emailAccount);
-
-            //_emailRepository = new FileEmailRepository(emailAccount.LocalFolder);            
-            var emailRepository = _emailRepositories.First(er => er.EmailAddress == emailAccount.EmailAddress);
-
-            List<EmailFolder> emailFolders = emailRepository.GetAllFolders().ToList();
+            List<EmailFolder> emailFolders = emailStorageService.GetAllFolders().ToList();
             List<EmailFolder> parentEmailFolders = emailFolders.Where(f => f.ParentFolderID == Guid.Empty).ToList();
            
             foreach (var emailFolder in parentEmailFolders.OrderBy(f => f.Name))
             {
-                DisplayFolderNode(emailFolder, emailRepository, null);               
+                DisplayFolderNode(emailFolder, emailStorageService, null);               
             }
         }
 
@@ -148,11 +131,11 @@ namespace CFEmailManager.Forms
             {
                 if (emailFolder.ExistsOnServer)
                 {
-                    nodeFolder = tvwEmails.Nodes.Add(string.Format("Folder.{0}", emailFolder.ID), emailFolder.Name);
+                    nodeFolder = tvwEmailFolders.Nodes.Add(string.Format("Folder.{0}", emailFolder.ID), emailFolder.Name);
                 }
                 else
                 {
-                    nodeFolder = tvwEmails.Nodes.Add(string.Format("Folder.{0}", emailFolder.ID), string.Format("{0} [DELETED]", emailFolder.Name));
+                    nodeFolder = tvwEmailFolders.Nodes.Add(string.Format("Folder.{0}", emailFolder.ID), string.Format("{0} [DELETED]", emailFolder.Name));
                 }
             }
             else
@@ -180,12 +163,12 @@ namespace CFEmailManager.Forms
         /// </summary>
         /// <param name="emailAccount"></param>
         /// <returns></returns>
-        private Task DownloadEmailsAsync(EmailAccount emailAccount, bool downloadAttachments, bool displayEmailFolders)
+        private Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount, bool downloadAttachments, bool displayEmailFolders)
         {
-            var emailRepository = _emailRepositories.First(er => er.EmailAddress == emailAccount.EmailAddress);
+            var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
 
             var task = _emailDownloader.DownloadEmailsAsync(emailAccount,
-                            emailRepository,
+                            emailStorageService,
                             downloadAttachments,
                             (folder) =>     // Action when starting folder download
                             {
@@ -206,21 +189,23 @@ namespace CFEmailManager.Forms
                                 // Indicate started
                                 this.Invoke((Action)delegate
                                 {
+                                    tscbAccount.Enabled = false;    // Prevent account change
                                     downloadEmailsToolStripMenuItem.Visible = false;
                                     cancelDownloadToolStripMenuItem.Visible = true;     // Allow cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";   // Sanity check                    
                                     DisplayStatus("Downloading emails");
                                 });
                             },
-                            () =>    // Action when download completed
+                            (emailDownloadStatistics) =>    // Action when download completed
                             {
                                 // Indicate complete
                                 this.Invoke((Action)delegate
                                 {
+                                    tscbAccount.Enabled = true;    // Allow account change
                                     downloadEmailsToolStripMenuItem.Visible = true;
                                     cancelDownloadToolStripMenuItem.Visible = false;    // Disable cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";
-                                    DisplayStatus("Downloaded emails");                                    
+                                    DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloaded} emails");                                    
 
                                     // Display email folders
                                     if (displayEmailFolders)
@@ -242,11 +227,19 @@ namespace CFEmailManager.Forms
         {
             splitContainer2.Panel2.Controls.Clear();
 
-            CFEmailManager.Controls.EmailObjectControl control = new CFEmailManager.Controls.EmailObjectControl();
-            control.SetParameters(emailFolder, email, SelectedEmailRepository);
+            var control = new EmailObjectControl();
+            control.SetParameters(emailFolder, email, SelectedEmailStorageService);
             control.Dock = DockStyle.Fill;
             control.Refresh();
             splitContainer2.Panel2.Controls.Add(control);
+        }
+
+        /// <summary>
+        /// Displays no email
+        /// </summary>
+        private void DisplayNoEmail()
+        {
+            splitContainer2.Panel2.Controls.Clear();
         }
 
         /// <summary>
@@ -258,7 +251,7 @@ namespace CFEmailManager.Forms
         {
             string[] folderNames = folderPath.Split('/');
 
-            TreeNode currentNode = tvwEmails.Nodes[0];
+            TreeNode currentNode = tvwEmailFolders.Nodes[0];
 
             for(int folderIndex =0; folderIndex < folderNames.Length; folderIndex++)
             {
@@ -285,122 +278,32 @@ namespace CFEmailManager.Forms
 
         private void tvwEmails_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            // Get emails to display, most recent first
             EmailFolder emailFolder = (EmailFolder)e.Node.Tag;
-            var emails = SelectedEmailRepository.GetEmails(emailFolder).OrderBy(m => m.ReceivedDate).ToList();     
-            DisplayEmails(emails);
-        }
+            var emails = SelectedEmailStorageService.GetEmails(emailFolder).OrderByDescending(m => m.ReceivedDate).ToList();
 
-        private void DisplayEmails(List<EmailObject> emails)
-        {
-            dgvEmail.Rows.Clear();
-            dgvEmail.Columns.Clear();
-            int columnIndex = -1;
-            columnIndex = dgvEmail.Columns.Add("EmailFolder", "EmailFolder");
-            dgvEmail.Columns[columnIndex].Visible = false;
-            columnIndex = dgvEmail.Columns.Add("Received", "Received");
-            dgvEmail.Columns[columnIndex].DefaultCellStyle.Format = "dd-MM-yyyy HH:mm";
-            dgvEmail.Columns[columnIndex].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            columnIndex = dgvEmail.Columns.Add("From", "From");
-            columnIndex = dgvEmail.Columns.Add("To", "To");
-            columnIndex = dgvEmail.Columns.Add("Subject", "Subject");
-            columnIndex = dgvEmail.Columns.Add("Attachments", "Attachments");
-            columnIndex = dgvEmail.Columns.Add("On Server", "On Server");
-            dgvEmail.Columns[columnIndex].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-
-            //wbEmail.Visible = false;
-
-            List<EmailFolder> emailFolders = SelectedEmailRepository.GetAllFolders();
-
-            foreach(var email in emails)
-            {
-                EmailFolder emailFolder = emailFolders.First(f => f.ID == email.FolderID);
-
-                using (DataGridViewRow row = new DataGridViewRow())
-                {
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {
-                        cell.Value = emailFolder.ID;
-                        cell.Tag = emailFolder;
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {
-                        cell.Value = email.ReceivedDate;
-                        cell.Tag = email;
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {
-                        cell.Value = email.From.Address;
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {
-                        cell.Value = string.Join("; ", email.To.Select(to => to.Address));
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {
-                        cell.Value = email.Subject;
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
-                    {                       
-                        cell.Value = string.Join("; ", email.Attachments.Select(a => a.Name));
-                        row.Cells.Add(cell);
-                    }
-
-                    using (DataGridViewCheckBoxCell cell = new DataGridViewCheckBoxCell())
-                    {
-                        cell.Value = email.ExistsOnServer;
-                        row.Cells.Add(cell);
-                    }
-
-                    dgvEmail.Rows.Add(row);
-                }
-
+            //DisplayEmails(emails);
+            var emailSummaryListControl = this.EmailSummaryListControl;
+            if (emailSummaryListControl != null)
+            {                
+                emailSummaryListControl.ModelToView(emails);
             }
-
-            dgvEmail.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-
         }
-
-        private void dgvEmail_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            EmailFolder emailFolder = (EmailFolder)dgvEmail.Rows[e.RowIndex].Cells["EmailFolder"].Tag;
-            EmailObject email = (EmailObject)dgvEmail.Rows[e.RowIndex].Cells["Received"].Tag;
-
-            DisplayEmail(emailFolder, email);
-        }
-
-        //private void DisplayEmail(EmailFolder emailFolder, EmailObject emailObject)
-        //{
-        //    string emailBodyFile = System.IO.Path.Combine(emailFolder.LocalFolder, string.Format("Body.{0}.eml", emailObject.ID));
-        //    string tmpFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CFEmailManager.email.html");
-        //    System.IO.File.Copy(emailBodyFile, tmpFile, true);
-
-        //    if (System.IO.File.Exists(emailBodyFile))
-        //    {
-        //        //wbEmail.Navigate("file://" + emailBodyFile.Replace(@"\\", @"//"));
-        //        wbEmail.Visible = true;
-        //        wbEmail.Navigate("file://" + tmpFile.Replace(@"\\", @"//"));
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("Email file does not exist");
-        //    }
-        //}
+        
 
         private void tscbAccount_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tscbAccount.SelectedIndex > -1)
             {
                 EmailAccount emailAccount = (EmailAccount)tscbAccount.SelectedItem;
+
+                // Set email storage for
+                var emailSummaryListControl = this.EmailSummaryListControl;
+                if (emailSummaryListControl != null)
+                {                    
+                    emailSummaryListControl.EmailStorageService = this.SelectedEmailStorageService;
+                }
+
                 DisplayEmailFolders(emailAccount);
             }
         }
@@ -412,7 +315,7 @@ namespace CFEmailManager.Forms
 
         private void downloadEmailsToolStripMenuItem_Click(object sender, EventArgs e)
         {                                  
-            _downloadTask = DownloadEmailsAsync(SelectedEmailAccount, true, true);                                  
+            _downloadEmailsTask = DownloadEmailsAsync(SelectedEmailAccount, true, true);                                  
         }
 
         private void DisplayStatus(string status)
@@ -424,12 +327,6 @@ namespace CFEmailManager.Forms
         private void cancelDownloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _emailDownloader.Cancel();
-
-            //if (_downloadTask != null && _downloadTaskTokenSource != null )
-            //{
-            //    cancelDownloadToolStripMenuItem.Text = "Cancelling download";
-            //    _downloadTaskTokenSource.Cancel();                
-            //}
         }
     }
 }

@@ -21,11 +21,15 @@ namespace CFEmailManager.EmailConnections.MailKit
     {
         public string ServerType => "IMAP";
 
-        public void Download(string server, string username, string password, string downloadFolder,
+        private DateTimeOffset _lastYield = DateTimeOffset.MinValue;
+
+        public EmailDownloadStatistics Download(string server, string username, string password, string downloadFolder,
                             bool downloadAttachments, IEmailStorageService emailRepository,
                             CancellationToken cancellationToken,
                             Action<string> folderStartAction = null, Action<string> folderEndAction = null)
         {
+            var emailDownloadStatistics = new EmailDownloadStatistics();
+
             using (var client = new ImapClient(new ProtocolLogger("imap.log")))
             {
                 //client.Connect("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
@@ -82,6 +86,8 @@ namespace CFEmailManager.EmailConnections.MailKit
 
                 client.Disconnect(true);
             }
+
+            return emailDownloadStatistics;
         }
 
         /// <summary>
@@ -89,12 +95,14 @@ namespace CFEmailManager.EmailConnections.MailKit
         /// </summary>
         /// <param name="mailFolder"></param>
         /// <param name="emailRepository"></param>
-        private void DownloadFolder(IMailFolder mailFolder, IEmailStorageService emailRepository, 
+        private EmailDownloadStatistics DownloadFolder(IMailFolder mailFolder, IEmailStorageService emailRepository, 
                             EmailFolder parentEmailFolder, List<string> folderNames,
                             bool downloadAttachments,
                             CancellationToken cancellationToken,
                             Action<string> folderStartAction = null, Action<string> folderEndAction = null)
         {
+            var emailDownloadStatistics = new EmailDownloadStatistics();
+
             // Set folder path for progress indication
             StringBuilder folderPath = new StringBuilder("");
             folderNames.ForEach(folderName =>
@@ -108,6 +116,8 @@ namespace CFEmailManager.EmailConnections.MailKit
             {
                 folderStartAction(folderPath.ToString());
             }
+
+            System.Threading.Thread.Yield();
 
             // Check if folder XML exists            
             EmailFolder emailFolder = emailRepository.GetFolderByPath(folderNames.ToArray());
@@ -128,6 +138,8 @@ namespace CFEmailManager.EmailConnections.MailKit
                 emailRepository.Update(emailFolder);    // Sets LocalFolder property
             }
 
+            System.Threading.Thread.Yield();
+
             // Set all child email folders as not existing on server so that we can check if it does exit
             var childEmailFolders = emailRepository.GetChildFolders(emailFolder);
             foreach (var childEmailFolder in childEmailFolders)
@@ -135,10 +147,16 @@ namespace CFEmailManager.EmailConnections.MailKit
                 emailRepository.SetNotExistsOnServer(childEmailFolder);
             }
 
+            System.Threading.Thread.Yield();
+
             // Get old emails in folder so that we can find new items
             var oldEmails = emailRepository.GetEmails(emailFolder);
 
+            System.Threading.Thread.Yield();
+
             mailFolder.Open(FolderAccess.ReadOnly);
+
+            System.Threading.Thread.Yield();
 
             // Download messages
             for (int messageIndex = 0; messageIndex < mailFolder.Count; messageIndex++)
@@ -155,6 +173,8 @@ namespace CFEmailManager.EmailConnections.MailKit
                 {
                     // Save email to local folder
                     SaveEmail(mail, downloadAttachments, emailFolder, emailRepository);
+
+                    emailDownloadStatistics.CountEmailsDownloaded++;
                 }
                 else if (oldEmail.ExistsOnServer == false)  // Previously downloaded
                 {
@@ -167,7 +187,14 @@ namespace CFEmailManager.EmailConnections.MailKit
                 {
                     break;
                 }
+
+                if (messageIndex % 20 == 0)
+                {
+                    System.Threading.Thread.Yield();
+                }
             }
+
+            System.Threading.Thread.Yield();
 
             // Process sub-folders
             var subFolders = mailFolder.GetSubfolders();
@@ -177,9 +204,13 @@ namespace CFEmailManager.EmailConnections.MailKit
                 subFolderNames.AddRange(folderNames);
                 subFolderNames.Add(subFolder.Name);
 
-                DownloadFolder(subFolder, emailRepository, emailFolder, subFolderNames, 
+                var emailDownloadStatistics2 = DownloadFolder(subFolder, emailRepository, emailFolder, subFolderNames, 
                             downloadAttachments, cancellationToken, folderStartAction, folderEndAction);
+
+                emailDownloadStatistics.AppendFrom(emailDownloadStatistics2);
             }
+
+            System.Threading.Thread.Yield();
 
             if (mailFolder.IsOpen)
             {
@@ -190,16 +221,18 @@ namespace CFEmailManager.EmailConnections.MailKit
             {
                 folderEndAction(folderPath.ToString());
             }
+
+            return emailDownloadStatistics;
         }
 
         /// <summary>
-        /// Saves email to email repository
+        /// Saves email to email storage service
         /// </summary>
         /// <param name="email"></param>
         /// <param name="downloadAttachments"></param>
         /// <param name="emailFolder"></param>
-        /// <param name="emailRepository"></param>
-        private EmailObject SaveEmail(MimeMessage email, bool downloadAttachments, EmailFolder emailFolder, IEmailStorageService emailRepository)
+        /// <param name="emailStorageService"></param>
+        private static EmailObject SaveEmail(MimeMessage email, bool downloadAttachments, EmailFolder emailFolder, IEmailStorageService emailStorageService)
         {                        
             EmailObject emailObject = new EmailObject()
             {
@@ -225,8 +258,11 @@ namespace CFEmailManager.EmailConnections.MailKit
             using (var stream = new MemoryStream())
             {
                 email.WriteTo(stream);
+                stream.Position = 0;
                 content = new byte[stream.Length];
                 stream.Read(content, 0, content.Length);
+
+                int xxxx = 1000;
             }
             
             // Download attachments
@@ -242,6 +278,7 @@ namespace CFEmailManager.EmailConnections.MailKit
                         using (var stream = new MemoryStream())
                         {
                             attachment.WriteTo(stream);
+                            stream.Position = 0;
                             var attachmentData = new byte[stream.Length];
                             stream.Read(attachmentData, 0, attachmentData.Length);
                             attachments.Add(attachmentData);
@@ -258,7 +295,7 @@ namespace CFEmailManager.EmailConnections.MailKit
                 }
             }
            
-            emailRepository.Update(emailObject, content, attachments);
+            emailStorageService.Update(emailObject, content, attachments);
 
             return emailObject;
         }        

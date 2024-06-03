@@ -40,9 +40,8 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.tvwEmails = new System.Windows.Forms.TreeView();
+            this.tvwEmailFolders = new System.Windows.Forms.TreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.dgvEmail = new System.Windows.Forms.DataGridView();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -50,9 +49,7 @@
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
-            this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvEmail)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -109,14 +106,14 @@
             // downloadEmailsToolStripMenuItem
             // 
             this.downloadEmailsToolStripMenuItem.Name = "downloadEmailsToolStripMenuItem";
-            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.downloadEmailsToolStripMenuItem.Text = "Download emails";
             this.downloadEmailsToolStripMenuItem.Click += new System.EventHandler(this.downloadEmailsToolStripMenuItem_Click);
             // 
             // cancelDownloadToolStripMenuItem
             // 
             this.cancelDownloadToolStripMenuItem.Name = "cancelDownloadToolStripMenuItem";
-            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.cancelDownloadToolStripMenuItem.Text = "Cancel download";
             this.cancelDownloadToolStripMenuItem.Visible = false;
             this.cancelDownloadToolStripMenuItem.Click += new System.EventHandler(this.cancelDownloadToolStripMenuItem_Click);
@@ -145,7 +142,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.tvwEmails);
+            this.splitContainer1.Panel1.Controls.Add(this.tvwEmailFolders);
             // 
             // splitContainer1.Panel2
             // 
@@ -154,14 +151,14 @@
             this.splitContainer1.SplitterDistance = 277;
             this.splitContainer1.TabIndex = 2;
             // 
-            // tvwEmails
+            // tvwEmailFolders
             // 
-            this.tvwEmails.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tvwEmails.Location = new System.Drawing.Point(0, 0);
-            this.tvwEmails.Name = "tvwEmails";
-            this.tvwEmails.Size = new System.Drawing.Size(277, 606);
-            this.tvwEmails.TabIndex = 0;
-            this.tvwEmails.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tvwEmails_AfterSelect);
+            this.tvwEmailFolders.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tvwEmailFolders.Location = new System.Drawing.Point(0, 0);
+            this.tvwEmailFolders.Name = "tvwEmailFolders";
+            this.tvwEmailFolders.Size = new System.Drawing.Size(277, 606);
+            this.tvwEmailFolders.TabIndex = 0;
+            this.tvwEmailFolders.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tvwEmails_AfterSelect);
             // 
             // splitContainer2
             // 
@@ -169,28 +166,9 @@
             this.splitContainer2.Location = new System.Drawing.Point(0, 0);
             this.splitContainer2.Name = "splitContainer2";
             this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // splitContainer2.Panel1
-            // 
-            this.splitContainer2.Panel1.Controls.Add(this.dgvEmail);
             this.splitContainer2.Size = new System.Drawing.Size(923, 606);
             this.splitContainer2.SplitterDistance = 201;
             this.splitContainer2.TabIndex = 0;
-            // 
-            // dgvEmail
-            // 
-            this.dgvEmail.AllowUserToAddRows = false;
-            this.dgvEmail.AllowUserToDeleteRows = false;
-            this.dgvEmail.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvEmail.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvEmail.Location = new System.Drawing.Point(0, 0);
-            this.dgvEmail.Name = "dgvEmail";
-            this.dgvEmail.ReadOnly = true;
-            this.dgvEmail.RowHeadersVisible = false;
-            this.dgvEmail.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvEmail.Size = new System.Drawing.Size(923, 201);
-            this.dgvEmail.TabIndex = 0;
-            this.dgvEmail.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvEmail_CellContentClick);
             // 
             // MainForm
             // 
@@ -212,10 +190,8 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            this.splitContainer2.Panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvEmail)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -226,9 +202,8 @@
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.TreeView tvwEmails;
+        private System.Windows.Forms.TreeView tvwEmailFolders;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private System.Windows.Forms.DataGridView dgvEmail;
         private System.Windows.Forms.ToolStripLabel toolStripLabel1;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
         private System.Windows.Forms.ToolStripComboBox tscbAccount;

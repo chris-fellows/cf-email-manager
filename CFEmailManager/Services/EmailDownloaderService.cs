@@ -18,26 +18,26 @@ namespace CFEmailManager.Services
             _emailConnections = emailConnections;          
         }   
 
-        public Task DownloadEmailsAsync(EmailAccount emailAccount,
+        public Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount,
                         IEmailStorageService emailRepository,
                         bool downloadAttachments,
                         Action<string> actionFolderStart,
                         Action<string> actionFolderEnd,
                         Action downloadStart,
-                        Action downloadEnd)
+                        Action<EmailDownloadStatistics> downloadEnd)
         {
             var task = Task.Factory.StartNew(() =>
             {
                 // Set cancellation token
                 _downloadTaskTokenSource = new CancellationTokenSource();
-
+                
                 downloadStart();
 
                 // Get email connection                
                 var emailConnection = _emailConnections.First(ec => ec.ServerType == emailAccount.ServerType);
 
                 // Download                
-                emailConnection.Download(emailAccount.Server, emailAccount.EmailAddress, emailAccount.Password,
+                var emailDownloadStatistics = emailConnection.Download(emailAccount.Server, emailAccount.EmailAddress, emailAccount.Password,
                                 emailAccount.LocalFolder, downloadAttachments, emailRepository, _downloadTaskTokenSource.Token,
                                 (folder) => // Main thread
                                 {
@@ -48,7 +48,9 @@ namespace CFEmailManager.Services
                                     actionFolderEnd(folder);
                                 });
 
-                downloadEnd();
+                downloadEnd(emailDownloadStatistics);
+
+                return emailDownloadStatistics;
             });
             return task;
         }

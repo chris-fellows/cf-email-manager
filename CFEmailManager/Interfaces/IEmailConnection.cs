@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CFEmailManager.Model;
+using System;
 using System.Threading;
 
 namespace CFEmailManager.Interfaces
@@ -11,7 +12,7 @@ namespace CFEmailManager.Interfaces
         string ServerType { get; }
 
         /// <summary>
-        /// Downloads emails to local
+        /// Downloads emails to email storage
         /// </summary>
         /// <param name="server"></param>
         /// <param name="username"></param>
@@ -21,7 +22,8 @@ namespace CFEmailManager.Interfaces
         /// <param name="emailRepository"></param>
         /// <param name="folderStartAction"></param>
         /// <param name="folderEndAction"></param>
-        void Download(string server, string username, string password, string downloadFolder, bool downloadAttachments, IEmailStorageService emailRepository,
+        EmailDownloadStatistics Download(string server, string username, string password, 
+                     string downloadFolder, bool downloadAttachments, IEmailStorageService emailStorageService,
                      CancellationToken cancellationToken,
                      Action<string> folderStartAction = null, Action<string> folderEndAction = null);
     }

@@ -9,13 +9,13 @@ namespace CFEmailManager.Interfaces
     /// </summary>
     public interface IEmailDownloaderService
     {
-        Task DownloadEmailsAsync(EmailAccount emailAccount,
+        Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount,
                         IEmailStorageService emailRepository,
                         bool downloadAttachments,
                         Action<string> actionFolderStart,
                         Action<string> actionFolderEnd,
                         Action downloadStart,
-                        Action downloadEnd);
+                        Action<EmailDownloadStatistics> downloadEnd);       
 
         void Cancel();
     }
