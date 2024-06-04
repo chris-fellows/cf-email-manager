@@ -55,25 +55,14 @@ namespace CFEmailManager
             string currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
             return Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) => {
-                    //services.AddTransient<IEmailRepository>((scope) =>
-                    //{
-                    //    var emailRepositories = new List<IEmailRepository>();
-                    //    var emailAccounts = scope.GetRequiredService<IEmailAccountRepository>().GetAll();
-                    //    foreach(var emailAccount in emailAccounts)
-                    //    {
-                    //        services.Add()
-                    //    }
-                    //});
-                    //
-
-                    // Regiter IEmailRepository for each email account
+                .ConfigureServices((context, services) => {                                                                              
+                    // Register IEmailStorageService for each email account
                     var emailAccounts = new EmailAccountService().GetAll();
-                    foreach(var emailAccount in emailAccounts)
+                    foreach (var emailAccount in emailAccounts)
                     {
                         services.AddTransient<IEmailStorageService>((scope) =>
                         {
-                            return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder);
+                            return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder);                                                            
                         });
                     }
                     services.AddTransient<IEmailDownloaderService, EmailDownloaderService>();

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFEmailManager.Controls;
+using CFUtilities.Encryption;
 
 namespace CFEmailManager.Forms
 {
@@ -19,7 +21,11 @@ namespace CFEmailManager.Forms
         private readonly IEmailDownloaderService _emailDownloader;
         private readonly IEnumerable<IEmailConnection> _emailConnections;
         private readonly IEnumerable<IEmailStorageService> _emailStorageServices;
-        
+        private bool _isTaskTray = false;
+        private bool _syncing = false;
+        private System.Timers.Timer _timer = null;
+        private DateTimeOffset _timeLastSync = DateTimeOffset.MinValue;
+
         private Task<EmailDownloadStatistics> _downloadEmailsTask;     // Active download task
 
         public MainForm(IEmailAccountService emailAccountRepository,
@@ -32,7 +38,21 @@ namespace CFEmailManager.Forms
             _emailDownloader = emailDownloader;
             _emailStorageServices = emailStorageServices;
 
+            //EncryptSetting("MyTestValue");
+
             InitializeComponent();
+        }
+
+        private string EncryptSetting(string value)
+        {            
+            var key = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random1").ToString());
+            var iv = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random2").ToString());
+
+            var encrypted = Convert.ToBase64String(AESEncryption.Encrypt(System.Text.Encoding.UTF8.GetBytes(value), key, iv));
+
+            var originalValue = System.Text.Encoding.UTF8.GetString(AESEncryption.Decrypt(Convert.FromBase64String(encrypted), key, iv));            
+            
+            return encrypted;
         }
 
         private EmailAccount SelectedEmailAccount
@@ -65,12 +85,66 @@ namespace CFEmailManager.Forms
         {            
             DisplayStatus("Initializing");
             
-            InitializeScreen();
-
-            DisplayStatus("Ready");
+            InitializeScreen();            
 
             // Select email account
             tscbAccount.SelectedIndex = 0;
+
+            if (Environment.GetCommandLineArgs().Contains("/Tray"))
+            {
+                RunInTray();
+            }
+
+            DisplayStatus("Ready");
+        }
+
+        private void RunInTray()
+        {
+            _isTaskTray = true;
+            niNotify.Icon = this.Icon;      // SystemIcons.Application doesn't work
+            niNotify.Text = "Email Manager - Idle";
+
+            _timer = new System.Timers.Timer();
+            _timer.Elapsed += _timer_Elapsed;
+            _timer.Interval = 10000 * 1;    // Run soon after launch
+            _timer.Enabled = true;
+        }
+
+        private void _timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                _timer.Enabled = false;
+
+                if (!_syncing && _timeLastSync.AddHours(3) <= DateTimeOffset.UtcNow)
+                {
+                    _timeLastSync = DateTimeOffset.UtcNow;
+
+                    // Download emails for each account
+                    foreach(var emailAccount in _emailAccountRepository.GetAll())
+                    {
+                        try
+                        {
+                            _downloadEmailsTask = DownloadEmailsAsync(emailAccount, true, true);
+
+                            // Wait for complete
+                            while (!_downloadEmailsTask.IsCompleted)
+                            {
+                                System.Threading.Thread.Sleep(5000);
+                            }
+                        }
+                        catch(Exception exception)
+                        {
+
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _timer.Interval = 30000;   // Occasional check
+                _timer.Enabled = true;                
+            }
         }
 
         private void InitializeScreen()
@@ -166,7 +240,7 @@ namespace CFEmailManager.Forms
         private Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount, bool downloadAttachments, bool displayEmailFolders)
         {
             var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
-
+      
             var task = _emailDownloader.DownloadEmailsAsync(emailAccount,
                             emailStorageService,
                             downloadAttachments,
@@ -193,6 +267,7 @@ namespace CFEmailManager.Forms
                                     downloadEmailsToolStripMenuItem.Visible = false;
                                     cancelDownloadToolStripMenuItem.Visible = true;     // Allow cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";   // Sanity check                    
+                                    niNotify.Text = $"Email Manager - Downloading {emailAccount.EmailAddress}";
                                     DisplayStatus("Downloading emails");
                                 });
                             },
@@ -205,9 +280,10 @@ namespace CFEmailManager.Forms
                                     downloadEmailsToolStripMenuItem.Visible = true;
                                     cancelDownloadToolStripMenuItem.Visible = false;    // Disable cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";
-                                    DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloaded} emails");                                    
+                                    niNotify.Text = $"Email Manager - Idle";
 
-                                    // Display email folders
+                                    DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloaded} emails");                                    
+                                
                                     if (displayEmailFolders)
                                     {
                                         DisplayEmailFolders(emailAccount);
@@ -327,6 +403,38 @@ namespace CFEmailManager.Forms
         private void cancelDownloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _emailDownloader.Cancel();
+        }
+
+        private void niNotify_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (_isTaskTray)
+            {
+                Show();
+                WindowState = FormWindowState.Normal;
+            }
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (_isTaskTray && FormWindowState.Minimized == WindowState)
+            {
+                Hide();
+            }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // If closing form with task tray then prompt user
+            if (e.CloseReason == CloseReason.UserClosing && _isTaskTray)
+            {
+                if (MessageBox.Show("Close application?", "Close", MessageBoxButtons.YesNo) == DialogResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            niNotify.Dispose();
         }
     }
 }

@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel2 = new System.Windows.Forms.ToolStripLabel();
@@ -42,6 +43,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tvwEmailFolders = new System.Windows.Forms.TreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.niNotify = new System.Windows.Forms.NotifyIcon(this.components);
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -170,6 +172,12 @@
             this.splitContainer2.SplitterDistance = 201;
             this.splitContainer2.TabIndex = 0;
             // 
+            // niNotify
+            // 
+            this.niNotify.Text = "notifyIcon1";
+            this.niNotify.Visible = true;
+            this.niNotify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.niNotify_MouseDoubleClick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -178,10 +186,13 @@
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Email Manager";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Resize += new System.EventHandler(this.MainForm_Resize);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
@@ -212,6 +223,7 @@
         private System.Windows.Forms.ToolStripMenuItem downloadEmailsToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
         private System.Windows.Forms.ToolStripMenuItem cancelDownloadToolStripMenuItem;
+        private System.Windows.Forms.NotifyIcon niNotify;
     }
 }
 

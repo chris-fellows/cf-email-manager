@@ -195,7 +195,6 @@
     <Compile Include="Interfaces\IEmailAccountService.cs" />
     <Compile Include="Interfaces\IEmailConnection.cs" />
     <Compile Include="Interfaces\IEmailDownloaderService.cs" />
-    <Compile Include="Utilities\AesEncryptionUtilities.cs" />
     <Compile Include="Utilities\InternalUtilities.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
@@ -249,6 +248,9 @@
       <Project>{35d2f2d8-23f9-40c7-9905-0ebbc6bf61e5}</Project>
       <Name>CFUtilities</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Images\Email.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

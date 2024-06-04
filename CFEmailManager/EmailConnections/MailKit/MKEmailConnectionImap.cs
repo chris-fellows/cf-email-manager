@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading;
 using CFEmailManager.Utilities;
 using System.Text;
+using CFUtilities.Encryption;
 
 namespace CFEmailManager.EmailConnections.MailKit
 {
@@ -28,7 +29,7 @@ namespace CFEmailManager.EmailConnections.MailKit
                             CancellationToken cancellationToken,
                             Action<string> folderStartAction = null, Action<string> folderEndAction = null)
         {
-            var emailDownloadStatistics = new EmailDownloadStatistics();
+            var emailDownloadStatistics = new EmailDownloadStatistics();           
 
             using (var client = new ImapClient(new ProtocolLogger("imap.log")))
             {
@@ -57,8 +58,10 @@ namespace CFEmailManager.EmailConnections.MailKit
                 var folders = rootFolder.GetSubfolders();
                 foreach(var folder in folders)
                 {
-                    DownloadFolder(folder, emailRepository, null, new List<string>() { folder.Name },
-                            downloadAttachments, cancellationToken, folderStartAction, folderEndAction);
+                    var statistics = DownloadFolder(folder, emailRepository, null, new List<string>() { folder.Name },
+                                        downloadAttachments, cancellationToken, folderStartAction, folderEndAction);
+
+                    emailDownloadStatistics.AppendFrom(statistics);
 
                     if (cancellationToken.IsCancellationRequested) break;                    
                 }
