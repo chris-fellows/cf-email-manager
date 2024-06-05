@@ -44,6 +44,7 @@
             this.tvwEmailFolders = new System.Windows.Forms.TreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.niNotify = new System.Windows.Forms.NotifyIcon(this.components);
+            this.encryptSettingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -98,7 +99,8 @@
             // 
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.downloadEmailsToolStripMenuItem,
-            this.cancelDownloadToolStripMenuItem});
+            this.cancelDownloadToolStripMenuItem,
+            this.encryptSettingToolStripMenuItem});
             this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
@@ -108,14 +110,14 @@
             // downloadEmailsToolStripMenuItem
             // 
             this.downloadEmailsToolStripMenuItem.Name = "downloadEmailsToolStripMenuItem";
-            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.downloadEmailsToolStripMenuItem.Text = "Download emails";
             this.downloadEmailsToolStripMenuItem.Click += new System.EventHandler(this.downloadEmailsToolStripMenuItem_Click);
             // 
             // cancelDownloadToolStripMenuItem
             // 
             this.cancelDownloadToolStripMenuItem.Name = "cancelDownloadToolStripMenuItem";
-            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.cancelDownloadToolStripMenuItem.Text = "Cancel download";
             this.cancelDownloadToolStripMenuItem.Visible = false;
             this.cancelDownloadToolStripMenuItem.Click += new System.EventHandler(this.cancelDownloadToolStripMenuItem_Click);
@@ -178,6 +180,13 @@
             this.niNotify.Visible = true;
             this.niNotify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.niNotify_MouseDoubleClick);
             // 
+            // encryptSettingToolStripMenuItem
+            // 
+            this.encryptSettingToolStripMenuItem.Name = "encryptSettingToolStripMenuItem";
+            this.encryptSettingToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.encryptSettingToolStripMenuItem.Text = "Encrypt setting";
+            this.encryptSettingToolStripMenuItem.Click += new System.EventHandler(this.encryptSettingToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -224,6 +233,7 @@
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
         private System.Windows.Forms.ToolStripMenuItem cancelDownloadToolStripMenuItem;
         private System.Windows.Forms.NotifyIcon niNotify;
+        private System.Windows.Forms.ToolStripMenuItem encryptSettingToolStripMenuItem;
     }
 }
 

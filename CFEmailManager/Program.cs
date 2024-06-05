@@ -61,10 +61,11 @@ namespace CFEmailManager
                     foreach (var emailAccount in emailAccounts)
                     {
                         services.AddTransient<IEmailStorageService>((scope) =>
-                        {
-                            return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder);                                                            
+                        {                            
+                            return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder, scope.GetRequiredService<IFileEncryption>());                                                            
                         });
                     }
+                    services.AddTransient<IFileEncryption, AESFileEncryption>();
                     services.AddTransient<IEmailDownloaderService, EmailDownloaderService>();
                     services.AddTransient<IEmailAccountService, EmailAccountService>();
                     services.RegisterAllTypes<IEmailConnection>(new[] { Assembly.GetExecutingAssembly() });                    

@@ -9,6 +9,8 @@ using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFEmailManager.Controls;
 using CFUtilities.Encryption;
+using CFEmailManager.Utilities;
+using MimeKit.Cryptography;
 
 namespace CFEmailManager.Forms
 {
@@ -32,7 +34,7 @@ namespace CFEmailManager.Forms
                         IEnumerable<IEmailConnection> emailConnections,
                         IEmailDownloaderService emailDownloader,
                         IEnumerable<IEmailStorageService> emailStorageServices)
-        {
+        {            
             _emailAccountRepository = emailAccountRepository;
             _emailConnections = emailConnections;
             _emailDownloader = emailDownloader;
@@ -43,17 +45,8 @@ namespace CFEmailManager.Forms
             InitializeComponent();
         }
 
-        private string EncryptSetting(string value)
-        {            
-            var key = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random1").ToString());
-            var iv = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random2").ToString());
 
-            var encrypted = Convert.ToBase64String(AESEncryption.Encrypt(System.Text.Encoding.UTF8.GetBytes(value), key, iv));
-
-            var originalValue = System.Text.Encoding.UTF8.GetString(AESEncryption.Decrypt(Convert.FromBase64String(encrypted), key, iv));            
-            
-            return encrypted;
-        }
+      
 
         private EmailAccount SelectedEmailAccount
         {
@@ -77,7 +70,7 @@ namespace CFEmailManager.Forms
                 {
                     return (EmailSummaryListControl)splitContainer2.Panel1.Controls[0];
                 }
-                return null;
+                return null;                
             }
         }
 
@@ -435,6 +428,20 @@ namespace CFEmailManager.Forms
             }
 
             niNotify.Dispose();
+        }
+
+        private void encryptSettingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InputValueForm form = new InputValueForm("Encrypt Setting", "Setting", "", null, null, true);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                // Encrypt
+                var encrypted = InternalUtilities.EncryptSettingToString(form.EnteredValue);
+
+                // Copy to clipboard
+                Clipboard.SetText(encrypted);
+                MessageBox.Show("The value has been copied to the clipboard", "Encrypt Setting");
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
+using CFEmailManager.Utilities;
 using CFUtilities.Encryption;
 
 namespace CFEmailManager.Services
@@ -39,8 +40,8 @@ namespace CFEmailManager.Services
                 var emailConnection = _emailConnections.First(ec => ec.ServerType == emailAccount.ServerType);
 
                 // Get password
-                var key = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random1").ToString());
-                var iv = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random2").ToString());
+                var key = InternalUtilities.DecryptSettingByDPToBytes(System.Configuration.ConfigurationSettings.AppSettings.Get("Random2").ToString());
+                var iv = InternalUtilities.DecryptSettingByDPToBytes(System.Configuration.ConfigurationSettings.AppSettings.Get("Random3").ToString());                
                 var password = Encoding.UTF8.GetString(AESEncryption.Decrypt(Convert.FromBase64String(emailAccount.Password), key, iv));
 
                 // Download                

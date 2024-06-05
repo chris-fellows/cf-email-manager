@@ -4,8 +4,6 @@ using System.Linq;
 using System.IO;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
-using CFUtilities.Encryption;
-using CFUtilities.Utilities;
 using CFUtilities.XML;
 
 namespace CFEmailManager
@@ -15,17 +13,15 @@ namespace CFEmailManager
     /// </summary>
     public class FileEmailStorageService : IEmailStorageService
     {
+        private readonly IFileEncryption _fileEncryption;
         private string _folder;
-        private string _emailAddress;
-        private readonly byte[] _encryptionKey;
-        private readonly byte[] _encryptionIV;
+        private string _emailAddress;       
 
-        public FileEmailStorageService(string emailAddress, string folder)
+        public FileEmailStorageService(string emailAddress, string folder, IFileEncryption fileEncryption)
         {
             _emailAddress = emailAddress;
             _folder = folder;
-            _encryptionKey = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random1").ToString()) ;
-            _encryptionIV = Convert.FromBase64String(System.Configuration.ConfigurationSettings.AppSettings.Get("Random2").ToString());            
+            _fileEncryption = fileEncryption;
             Directory.CreateDirectory(_folder);
         }
 
@@ -189,14 +185,14 @@ namespace CFEmailManager
             var folder = allEmailFolders.First(f => f.ID == email.FolderID);
             var emailFolderLocalFolder = GetLocalFolder(folder, allEmailFolders);
 
-            string emailXmlFile = GetEmailObjectFile(emailFolderLocalFolder, email); //  Path.Combine(emailFolderLocalFolder, string.Format("Email.{0}.xml", email.ID));
+            string emailXmlFile = GetEmailObjectFile(emailFolderLocalFolder, email);
             XmlSerialization.SerializeToFile<EmailObject>(email, emailXmlFile);
 
             // Save email
             if (content != null && content.Length > 0)
             {
-                string emailFile = GetEmailContentFile(emailFolderLocalFolder, email);  //  Path.Combine(emailFolderLocalFolder, string.Format("Content.{0}.eml", email.ID));
-                WriteFileEncrypted(emailFile, content, _encryptionKey, _encryptionIV);                                
+                string emailFile = GetEmailContentFile(emailFolderLocalFolder, email);
+                _fileEncryption.WriteFile(emailFile, content);                
             }
 
             // Delete old attachments, shouldn't exist (because we normally only download email once)
@@ -215,8 +211,8 @@ namespace CFEmailManager
                 for (int index = 0; index < email.Attachments.Count; index++)
                 {
                     var attachment = email.Attachments[index];
-                    var attachmentFile = GetEmailAttachmentFile(emailFolderLocalFolder, email, attachment);
-                    WriteFileEncrypted(attachmentFile, attachments[index], _encryptionKey, _encryptionIV);                    
+                    var attachmentFile = GetEmailAttachmentFile(emailFolderLocalFolder, email, attachment);                    
+                    _fileEncryption.WriteFile(attachmentFile, attachments[index]);
                 }
             }
         }
@@ -263,8 +259,8 @@ namespace CFEmailManager
         public byte[] GetEmailContent(EmailObject emailObject)
         {
             var emailFolderPath = GetEmailFolderPath(emailObject);            
-            var emailFile = GetEmailContentFile(emailFolderPath, emailObject);
-            return File.Exists(emailFile) ? ReadFileEncrypted(emailFile, _encryptionKey, _encryptionIV) : new byte[0];
+            var emailFile = GetEmailContentFile(emailFolderPath, emailObject);            
+            return File.Exists(emailFile) ? _fileEncryption.ReadFile(emailFile) : new byte[0];
         }
 
         public byte[] GetEmailAttachmentContent(EmailObject emailObject, int attachmentIndex)
@@ -272,9 +268,8 @@ namespace CFEmailManager
             var emailFolderPath = GetEmailFolderPath(emailObject);
             var attachmentObject = emailObject.Attachments[attachmentIndex];
 
-            var attachmentFile = GetEmailAttachmentFile(emailFolderPath, emailObject, attachmentObject);    //  Path.Combine(emailFolderPath, $"Attachment.{emailObject.ID}.{attachmentObject.ID}");
-            return File.Exists(attachmentFile) ? ReadFileEncrypted(attachmentFile, _encryptionKey, _encryptionIV) : new byte[0];
-            //return File.Exists(attachmentFile) ? File.ReadAllBytes(attachmentFile) : new byte[0];
+            var attachmentFile = GetEmailAttachmentFile(emailFolderPath, emailObject, attachmentObject);
+            return File.Exists(attachmentFile) ? _fileEncryption.ReadFile(attachmentFile) : new byte[0];
         }
 
         /// <summary>
@@ -336,27 +331,6 @@ namespace CFEmailManager
         private static string GetEmailAttachmentFile(string localFolder, EmailObject emailObject, EmailAttachment attachment)
         {
             return Path.Combine(localFolder, $"{emailObject.ID}.{attachment.ID}.Attachment.obj");
-        }
-
-        /// <summary>
-        /// Writes file as encrypted and compressed
-        /// </summary>
-        /// <param name="file"></param>
-        /// <param name="content"></param>
-        private static void WriteFileEncrypted(string file, byte[] content, byte[] key, byte[] iv)
-        {         
-            var contentEncrypted = AESEncryption.Encrypt(CompressionUtilities.CompressWithDeflate(content), key, iv);
-            File.WriteAllBytes(file, contentEncrypted);
-        }
-
-        /// <summary>
-        /// Reads encrypted and compressed file
-        /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        private static byte[] ReadFileEncrypted(string file, byte[] key, byte[] iv)
-        {            
-            return CompressionUtilities.DecompressWithDeflate(AESEncryption.Decrypt(File.ReadAllBytes(file), key, iv));            
         }
     }
 }
