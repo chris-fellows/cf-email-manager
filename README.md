@@ -1,11 +1,15 @@
 # cf-email-manager
 
-Tool for managing emails via POP or IMAP. It was created in order to be able to back up emails from 
-Hotmail & GMail accounts so that emails can be deleted from the account but a copy is still available 
-locally.
+Tool for downloading emails from POP or IMAP and storing them locally. Allows older emails to be deleted
+from server but still available locally.
 
-Future Changes
---------------
-- Encrypt all locally stored emails & attachments.
-- Add function to delete email from remote mailbox.
-- Add system tray integration and automatically run download in background.
+Emails & attachments are stored in encrpyted format for security.
+
+Modes of Execution
+------------------
+1) Interactively with a UI.
+2) From the system tray (Usually launched on startup).
+
+Issues
+------
+- Need to handle server folder rename.

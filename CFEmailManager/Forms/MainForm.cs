@@ -85,6 +85,7 @@ namespace CFEmailManager.Forms
             _isTaskTray = true;
             niNotify.Icon = this.Icon;      // SystemIcons.Application doesn't work
             niNotify.Text = "Email Manager - Idle";
+            WindowState = FormWindowState.Minimized;
 
             _timer = new System.Timers.Timer();
             _timer.Elapsed += _timer_Elapsed;
@@ -120,7 +121,7 @@ namespace CFEmailManager.Forms
             }
             finally
             {
-                _timer.Interval = 30000;   // Occasional check
+                _timer.Interval = 60000;   // Occasional check
                 _timer.Enabled = true;                
             }
         }
