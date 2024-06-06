@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFEmailManager.Controls;
-using CFUtilities.Encryption;
 using CFEmailManager.Utilities;
-using MimeKit.Cryptography;
 
 namespace CFEmailManager.Forms
 {
@@ -28,7 +25,7 @@ namespace CFEmailManager.Forms
         private System.Timers.Timer _timer = null;
         private DateTimeOffset _timeLastSync = DateTimeOffset.MinValue;
 
-        private Task<EmailDownloadStatistics> _downloadEmailsTask;     // Active download task
+        private Task<EmailDownloadStatistics> _downloadEmailsTask;
 
         public MainForm(IEmailAccountService emailAccountRepository,
                         IEnumerable<IEmailConnection> emailConnections,
@@ -39,15 +36,10 @@ namespace CFEmailManager.Forms
             _emailConnections = emailConnections;
             _emailDownloader = emailDownloader;
             _emailStorageServices = emailStorageServices;
-
-            //EncryptSetting("MyTestValue");
-
+            
             InitializeComponent();
         }
-
-
-      
-
+   
         private EmailAccount SelectedEmailAccount
         {
             get { return (EmailAccount)tscbAccount.SelectedItem; }
@@ -78,10 +70,7 @@ namespace CFEmailManager.Forms
         {            
             DisplayStatus("Initializing");
             
-            InitializeScreen();            
-
-            // Select email account
-            tscbAccount.SelectedIndex = 0;
+            InitializeScreen("");                    
 
             if (Environment.GetCommandLineArgs().Contains("/Tray"))
             {
@@ -113,18 +102,14 @@ namespace CFEmailManager.Forms
                 {
                     _timeLastSync = DateTimeOffset.UtcNow;
 
-                    // Download emails for each account
+                    // Download emails for each account                    
                     foreach(var emailAccount in _emailAccountRepository.GetAll())
                     {
                         try
                         {
-                            _downloadEmailsTask = DownloadEmailsAsync(emailAccount, true, true);
-
-                            // Wait for complete
-                            while (!_downloadEmailsTask.IsCompleted)
-                            {
-                                System.Threading.Thread.Sleep(5000);
-                            }
+                            var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
+                            _downloadEmailsTask = DownloadEmailsAsync(emailAccount, true, true, emailStorageService);
+                            _downloadEmailsTask.Wait();                                                        
                         }
                         catch(Exception exception)
                         {
@@ -140,7 +125,7 @@ namespace CFEmailManager.Forms
             }
         }
 
-        private void InitializeScreen()
+        private void InitializeScreen(string selectedEmailAccountId)
         {            
             // Default
             DisplayEmailSummaryListControl();   
@@ -149,7 +134,26 @@ namespace CFEmailManager.Forms
             var emailAccounts = _emailAccountRepository.GetAll();
             tscbAccount.ComboBox.ValueMember = nameof(EmailAccount.EmailAddress);
             tscbAccount.ComboBox.DisplayMember = nameof(EmailAccount.EmailAddress);
-            tscbAccount.ComboBox.DataSource = emailAccounts;         
+            tscbAccount.ComboBox.DataSource = emailAccounts;
+
+            // Select email account
+            //if (emailAccounts.Any()) tscbAccount.SelectedIndex = 0;
+            if (!String.IsNullOrEmpty(selectedEmailAccountId))
+            {
+                var emailAccount = emailAccounts.First(a => a.ID == selectedEmailAccountId);
+                tscbAccount.SelectedIndex = emailAccounts.IndexOf(emailAccount);
+            }
+            else if (emailAccounts.Any())
+            {
+                tscbAccount.SelectedIndex = 0;
+            }
+
+
+            // Set UI based on whether any accounts
+            downloadEmailsToolStripMenuItem.Enabled = emailAccounts.Any();
+            downloadEmailsAllAccountsToolStripMenuItem.Enabled = emailAccounts.Any();
+            deleteAccountToolStripMenuItem.Enabled = emailAccounts.Any();
+            editAccountToolStripMenuItem.Enabled = emailAccounts.Any();
         }
 
         private void DisplayEmailSummaryListControl()
@@ -230,10 +234,9 @@ namespace CFEmailManager.Forms
         /// </summary>
         /// <param name="emailAccount"></param>
         /// <returns></returns>
-        private Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount, bool downloadAttachments, bool displayEmailFolders)
-        {
-            var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
-      
+        private Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount, bool downloadAttachments, bool displayEmailFolders,
+                                                                IEmailStorageService emailStorageService)
+        {                  
             var task = _emailDownloader.DownloadEmailsAsync(emailAccount,
                             emailStorageService,
                             downloadAttachments,
@@ -258,6 +261,7 @@ namespace CFEmailManager.Forms
                                 {
                                     tscbAccount.Enabled = false;    // Prevent account change
                                     downloadEmailsToolStripMenuItem.Visible = false;
+                                    downloadEmailsAllAccountsToolStripMenuItem.Visible = false;
                                     cancelDownloadToolStripMenuItem.Visible = true;     // Allow cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";   // Sanity check                    
                                     niNotify.Text = $"Email Manager - Downloading {emailAccount.EmailAddress}";
@@ -271,9 +275,14 @@ namespace CFEmailManager.Forms
                                 {
                                     tscbAccount.Enabled = true;    // Allow account change
                                     downloadEmailsToolStripMenuItem.Visible = true;
+                                    downloadEmailsAllAccountsToolStripMenuItem.Visible = true;
                                     cancelDownloadToolStripMenuItem.Visible = false;    // Disable cancel
                                     cancelDownloadToolStripMenuItem.Text = "Cancel download";
                                     niNotify.Text = $"Email Manager - Idle";
+
+                                    // Update last download time
+                                    emailAccount.TimeLastDownload = DateTimeOffset.UtcNow;
+                                    _emailAccountRepository.Update(emailAccount);
 
                                     DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloaded} emails");                                    
                                 
@@ -383,8 +392,9 @@ namespace CFEmailManager.Forms
         }
 
         private void downloadEmailsToolStripMenuItem_Click(object sender, EventArgs e)
-        {                                  
-            _downloadEmailsTask = DownloadEmailsAsync(SelectedEmailAccount, true, true);                                  
+        {
+            var emailStorageService = _emailStorageServices.First(ess => ess.EmailAddress == SelectedEmailAccount.EmailAddress);
+            _downloadEmailsTask = DownloadEmailsAsync(SelectedEmailAccount, true, true, emailStorageService);
         }
 
         private void DisplayStatus(string status)
@@ -441,6 +451,100 @@ namespace CFEmailManager.Forms
                 // Copy to clipboard
                 Clipboard.SetText(encrypted);
                 MessageBox.Show("The value has been copied to the clipboard", "Encrypt Setting");
+            }
+        }
+
+        private void downloadEmailsAllAccountsToolStripMenuItem_Click(object sender, EventArgs e)
+        {                           
+            foreach (var emailAccount in _emailAccountRepository.GetAll())
+            {
+                try
+                {
+                    var emailStorageService = _emailStorageServices.First(er => er.EmailAddress == emailAccount.EmailAddress);
+
+                    _downloadEmailsTask = DownloadEmailsAsync(emailAccount, true, true, emailStorageService);
+                    _downloadEmailsTask.Wait();                    
+                }
+                catch (Exception exception)
+                {
+
+                }
+            }
+        }
+
+        private void editEmailAccountToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var emailAccount = SelectedEmailAccount;
+            EmailAccountForm form = new EmailAccountForm(emailAccount);            
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var messages = form.ValidateBeforeApplyChanges();
+                if (messages.Any())
+                {
+                    MessageBox.Show(messages[0], "Error");
+                }
+                else if(MessageBox.Show("Save changes?", "Edit Email Account", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    form.ApplyChanges();
+                    _emailAccountRepository.Update(emailAccount);
+                }
+            }
+        }
+
+        private void editAccountToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var emailAccount = SelectedEmailAccount;
+            EmailAccountForm form = new EmailAccountForm(emailAccount);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var messages = form.ValidateBeforeApplyChanges();
+                if (messages.Any())
+                {
+                    MessageBox.Show(messages[0], "Error");
+                }
+                else if (MessageBox.Show("Save changes?", "Edit Account", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    form.ApplyChanges();
+                    _emailAccountRepository.Update(emailAccount);
+                }
+            }
+        }
+
+        private void addAccountToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var emailAccount = new EmailAccount()
+            {
+                ID = Guid.NewGuid().ToString(),
+                ServerType = "IMAP"
+            };
+            EmailAccountForm form = new EmailAccountForm(emailAccount);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var messages = form.ValidateBeforeApplyChanges();
+                if (messages.Any())
+                {
+                    MessageBox.Show(messages[0], "Error");
+                }
+                else if (MessageBox.Show("Save new account?", "Add Account", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    form.ApplyChanges();
+                    _emailAccountRepository.Insert(emailAccount);
+
+                    // Refresh screen with new email account selected
+                    InitializeScreen(emailAccount.ID);
+                }
+            }
+        }
+
+        private void deleteAccountToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var emailAccount = SelectedEmailAccount;
+            if (MessageBox.Show($"Delete account {emailAccount.EmailAddress}?", "Delete Account", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                _emailAccountRepository.Delete(emailAccount.ID);
+
+                // Refresh screen with first email account (if any) selected                
+                InitializeScreen("");
             }
         }
     }

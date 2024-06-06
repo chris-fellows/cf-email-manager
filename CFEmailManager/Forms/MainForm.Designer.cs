@@ -37,14 +37,19 @@
             this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.downloadEmailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.downloadEmailsAllAccountsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cancelDownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.encryptSettingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tvwEmailFolders = new System.Windows.Forms.TreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.niNotify = new System.Windows.Forms.NotifyIcon(this.components);
-            this.encryptSettingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.editAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -62,7 +67,8 @@
             this.tscbAccount,
             this.toolStripLabel1,
             this.toolStripTextBox1,
-            this.toolStripDropDownButton1});
+            this.toolStripDropDownButton1,
+            this.toolStripDropDownButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1204, 25);
@@ -99,6 +105,7 @@
             // 
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.downloadEmailsToolStripMenuItem,
+            this.downloadEmailsAllAccountsToolStripMenuItem,
             this.cancelDownloadToolStripMenuItem,
             this.encryptSettingToolStripMenuItem});
             this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
@@ -110,17 +117,31 @@
             // downloadEmailsToolStripMenuItem
             // 
             this.downloadEmailsToolStripMenuItem.Name = "downloadEmailsToolStripMenuItem";
-            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.downloadEmailsToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.downloadEmailsToolStripMenuItem.Text = "Download emails";
             this.downloadEmailsToolStripMenuItem.Click += new System.EventHandler(this.downloadEmailsToolStripMenuItem_Click);
+            // 
+            // downloadEmailsAllAccountsToolStripMenuItem
+            // 
+            this.downloadEmailsAllAccountsToolStripMenuItem.Name = "downloadEmailsAllAccountsToolStripMenuItem";
+            this.downloadEmailsAllAccountsToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.downloadEmailsAllAccountsToolStripMenuItem.Text = "Download emails (All accounts)";
+            this.downloadEmailsAllAccountsToolStripMenuItem.Click += new System.EventHandler(this.downloadEmailsAllAccountsToolStripMenuItem_Click);
             // 
             // cancelDownloadToolStripMenuItem
             // 
             this.cancelDownloadToolStripMenuItem.Name = "cancelDownloadToolStripMenuItem";
-            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cancelDownloadToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.cancelDownloadToolStripMenuItem.Text = "Cancel download";
             this.cancelDownloadToolStripMenuItem.Visible = false;
             this.cancelDownloadToolStripMenuItem.Click += new System.EventHandler(this.cancelDownloadToolStripMenuItem_Click);
+            // 
+            // encryptSettingToolStripMenuItem
+            // 
+            this.encryptSettingToolStripMenuItem.Name = "encryptSettingToolStripMenuItem";
+            this.encryptSettingToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.encryptSettingToolStripMenuItem.Text = "Encrypt setting";
+            this.encryptSettingToolStripMenuItem.Click += new System.EventHandler(this.encryptSettingToolStripMenuItem_Click);
             // 
             // statusStrip1
             // 
@@ -180,12 +201,38 @@
             this.niNotify.Visible = true;
             this.niNotify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.niNotify_MouseDoubleClick);
             // 
-            // encryptSettingToolStripMenuItem
+            // toolStripDropDownButton2
             // 
-            this.encryptSettingToolStripMenuItem.Name = "encryptSettingToolStripMenuItem";
-            this.encryptSettingToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.encryptSettingToolStripMenuItem.Text = "Encrypt setting";
-            this.encryptSettingToolStripMenuItem.Click += new System.EventHandler(this.encryptSettingToolStripMenuItem_Click);
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addAccountToolStripMenuItem,
+            this.editAccountToolStripMenuItem,
+            this.deleteAccountToolStripMenuItem});
+            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
+            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            this.toolStripDropDownButton2.Size = new System.Drawing.Size(86, 22);
+            this.toolStripDropDownButton2.Text = "Accounts";
+            // 
+            // editAccountToolStripMenuItem
+            // 
+            this.editAccountToolStripMenuItem.Name = "editAccountToolStripMenuItem";
+            this.editAccountToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editAccountToolStripMenuItem.Text = "Edit account";
+            this.editAccountToolStripMenuItem.Click += new System.EventHandler(this.editAccountToolStripMenuItem_Click);
+            // 
+            // addAccountToolStripMenuItem
+            // 
+            this.addAccountToolStripMenuItem.Name = "addAccountToolStripMenuItem";
+            this.addAccountToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addAccountToolStripMenuItem.Text = "Add account";
+            this.addAccountToolStripMenuItem.Click += new System.EventHandler(this.addAccountToolStripMenuItem_Click);
+            // 
+            // deleteAccountToolStripMenuItem
+            // 
+            this.deleteAccountToolStripMenuItem.Name = "deleteAccountToolStripMenuItem";
+            this.deleteAccountToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteAccountToolStripMenuItem.Text = "Delete account";
+            this.deleteAccountToolStripMenuItem.Click += new System.EventHandler(this.deleteAccountToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -234,6 +281,11 @@
         private System.Windows.Forms.ToolStripMenuItem cancelDownloadToolStripMenuItem;
         private System.Windows.Forms.NotifyIcon niNotify;
         private System.Windows.Forms.ToolStripMenuItem encryptSettingToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem downloadEmailsAllAccountsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
+        private System.Windows.Forms.ToolStripMenuItem editAccountToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addAccountToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteAccountToolStripMenuItem;
     }
 }
 

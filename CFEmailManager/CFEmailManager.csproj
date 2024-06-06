@@ -179,6 +179,12 @@
     <Compile Include="Controls\EmailSummaryListControl.Designer.cs">
       <DependentUpon>EmailSummaryListControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\EmailAccountForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\EmailAccountForm.Designer.cs">
+      <DependentUpon>EmailAccountForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\InputValueForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -224,6 +230,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\EmailSummaryListControl.resx">
       <DependentUpon>EmailSummaryListControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\EmailAccountForm.resx">
+      <DependentUpon>EmailAccountForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\InputValueForm.resx">
       <DependentUpon>InputValueForm.cs</DependentUpon>
