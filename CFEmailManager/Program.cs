@@ -9,22 +9,14 @@ using System.Reflection;
 using CFEmailManager.Forms;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Services;
+using CFUtilities.Logging;
+using CFUtilities.Interfaces;
+using CFUtilities.Services;
 
 namespace CFEmailManager
 {
     static class Program
-    {
-        ///// <summary>
-        ///// The main entry point for the application.
-        ///// </summary>
-        //[STAThread]
-        //static void Main()
-        //{
-        //    Application.EnableVisualStyles();
-        //    Application.SetCompatibleTextRenderingDefault(false);
-        //    Application.Run(new MainForm());
-        //}
-
+    {    
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -46,12 +38,10 @@ namespace CFEmailManager
         /// </summary>
         /// <returns></returns>
         static IHostBuilder CreateHostBuilder()
-        {          
-            // Get path to executable
-            string currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-
+        {                   
             return Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) => {
+
                     // Register IEmailStorageService for each email account                    
                     var emailAccountService = new EmailAccountService(Path.Combine(System.Configuration.ConfigurationSettings.AppSettings.Get("DataFolder"), "EmailAccounts"));
                     foreach (var emailAccount in emailAccountService.GetAll())
@@ -61,6 +51,17 @@ namespace CFEmailManager
                             return new FileEmailStorageService(emailAccount.EmailAddress, emailAccount.LocalFolder, scope.GetRequiredService<IFileEncryption>());                                                            
                         });
                     }
+
+                    services.AddTransient<IPlaceholderService, PlaceholderService>();
+                    services.AddTransient<ILogger>((scope) =>
+                    {
+                        var placeholderService = scope.GetRequiredService<IPlaceholderService>();
+
+                        // Get log file
+                        var logsFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LogsFolder").ToString();
+                        logsFolder = placeholderService.GetWithPlaceholdersReplaced(logsFolder, new Dictionary<string, object>());
+                        return new CSVLogger((Char)9, Path.Combine(logsFolder, "{date:MM-yyyy}"), placeholderService);
+                    });
                     services.AddTransient<IFileEncryption, AESFileEncryption>();
                     services.AddTransient<IEmailDownloaderService, EmailDownloaderService>();
                     services.AddTransient<IEmailAccountService>((scope) =>

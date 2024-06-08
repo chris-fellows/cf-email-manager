@@ -2,11 +2,14 @@
 {
     public class EmailDownloadStatistics
     {       
-        public int CountEmailsDownloaded { get; set; }
+        public int CountEmailsDownloadSuccess { get; set; }
+
+        public int CountEmailsDownloadError { get; set; }
 
         public void AppendFrom(EmailDownloadStatistics emailDownloadStatistics)
         {
-            CountEmailsDownloaded += emailDownloadStatistics.CountEmailsDownloaded;
+            CountEmailsDownloadSuccess += emailDownloadStatistics.CountEmailsDownloadSuccess;
+            CountEmailsDownloadError += emailDownloadStatistics.CountEmailsDownloadError;
         }
     }
 }

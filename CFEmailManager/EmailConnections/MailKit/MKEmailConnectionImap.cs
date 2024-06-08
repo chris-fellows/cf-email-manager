@@ -11,7 +11,7 @@ using System.Linq;
 using System.Threading;
 using CFEmailManager.Utilities;
 using System.Text;
-using CFUtilities.Encryption;
+using CFUtilities.Logging;
 
 namespace CFEmailManager.EmailConnections.MailKit
 {
@@ -20,16 +20,27 @@ namespace CFEmailManager.EmailConnections.MailKit
     /// </summary>
     public class MKEmailConnectionImap : IEmailConnection
     {
+        private readonly ILogger _auditLog;
+
+        public MKEmailConnectionImap(ILogger auditLog)
+        {
+            _auditLog = auditLog;
+        }
+
         public string ServerType => "IMAP";
 
         private DateTimeOffset _lastYield = DateTimeOffset.MinValue;
 
-        public EmailDownloadStatistics Download(string server, string username, string password, string downloadFolder,
-                            bool downloadAttachments, IEmailStorageService emailRepository,
+        public EmailDownloadStatistics Download(string server, string username, string password,
+                            bool downloadAttachments,
+                            List<string> topLevelFoldersToIgnore,
+                            IEmailStorageService emailRepository,
                             CancellationToken cancellationToken,
                             Action<string> folderStartAction = null, Action<string> folderEndAction = null)
         {
-            var emailDownloadStatistics = new EmailDownloadStatistics();           
+            var emailDownloadStatistics = new EmailDownloadStatistics();
+
+            _auditLog.Write(InternalUtilities.CreateAuditLogEntry("DOWNLOAD_START", username, "", "", ""));
 
             using (var client = new ImapClient(new ProtocolLogger("imap.log")))
             {
@@ -58,37 +69,23 @@ namespace CFEmailManager.EmailConnections.MailKit
                 var folders = rootFolder.GetSubfolders();
                 foreach(var folder in folders)
                 {
+                    _auditLog.Write(InternalUtilities.CreateAuditLogEntry("PROCESSING_FOLDER_START", username, "", "", ""));
+
                     var statistics = DownloadFolder(folder, emailRepository, null, new List<string>() { folder.Name },
-                                        downloadAttachments, cancellationToken, folderStartAction, folderEndAction);
+                                        downloadAttachments, topLevelFoldersToIgnore, cancellationToken, folderStartAction, folderEndAction);
 
                     emailDownloadStatistics.AppendFrom(statistics);
 
+                    _auditLog.Write(InternalUtilities.CreateAuditLogEntry("PROCESSING_FOLDER_COMPLETE", username, "", "", ""));
+
                     if (cancellationToken.IsCancellationRequested) break;                    
                 }
-
-                /*
-                var folders = client.GetFolders(client.PersonalNamespaces[0]);
-
-                foreach (var folder in folders)
-                {
-                    System.Diagnostics.Debug.WriteLine($"{folder.Name} - {folder.FullName}");
-                }
-                */
-
-                /*
-                var uids = client.Inbox.Search(SearchQuery.All);
-
-                foreach (var uid in uids)
-                {
-                    var message = client.Inbox.GetMessage(uid);
-
-                    // write the message to a file
-                    message.WriteTo(string.Format("{0}.eml", uid));
-                }
-                */
-
+              
                 client.Disconnect(true);
             }
+
+            _auditLog.Write(InternalUtilities.CreateAuditLogEntry("DOWNLOAD_COMPLETE", username, "", "", 
+                        $"Emails downloaded={emailDownloadStatistics.CountEmailsDownloadSuccess}; Emails download errors={emailDownloadStatistics.CountEmailsDownloadError}"));
 
             return emailDownloadStatistics;
         }
@@ -101,6 +98,7 @@ namespace CFEmailManager.EmailConnections.MailKit
         private EmailDownloadStatistics DownloadFolder(IMailFolder mailFolder, IEmailStorageService emailRepository, 
                             EmailFolder parentEmailFolder, List<string> folderNames,
                             bool downloadAttachments,
+                            List<string> topLevelFoldersToIgnore,
                             CancellationToken cancellationToken,
                             Action<string> folderStartAction = null, Action<string> folderEndAction = null)
         {
@@ -127,15 +125,18 @@ namespace CFEmailManager.EmailConnections.MailKit
 
             if (emailFolder == null)   // Top level folder
             {
+                // ew string[] { "Junk", "Spam" }
                 emailFolder = new EmailFolder()
                 {
                     ID = Guid.NewGuid(),
                     ParentFolderID = (parentEmailFolder == null ? Guid.Empty : parentEmailFolder.ID),
                     Name = mailFolder.Name,
                     //LocalFolder = localFolder,
-                    SyncEnabled = Array.IndexOf(new string[] { "Junk", "Spam" }, mailFolder.Name) == -1,
+                    SyncEnabled = (parentEmailFolder == null) ? 
+                            (Array.IndexOf(topLevelFoldersToIgnore.ToArray(), mailFolder.Name) == -1) :
+                            true,
                     ExistsOnServer = true
-                };
+                };                
 
                 // Save Folder.xml
                 emailRepository.Update(emailFolder);    // Sets LocalFolder property
@@ -174,10 +175,18 @@ namespace CFEmailManager.EmailConnections.MailKit
                 // Save email if new
                 if (oldEmail == null)     // New email
                 {
-                    // Save email to local folder
-                    SaveEmail(mail, downloadAttachments, emailFolder, emailRepository);
-
-                    emailDownloadStatistics.CountEmailsDownloaded++;
+                    // Save email
+                    try
+                    {                        
+                        SaveEmail(mail, downloadAttachments, emailFolder, emailRepository);
+                        emailDownloadStatistics.CountEmailsDownloadSuccess++;
+                    }
+                    catch(Exception exception)
+                    {
+                        _auditLog.Write(InternalUtilities.CreateAuditLogEntry("DOWNLOAD_EMAIL_ERROR", emailRepository.EmailAddress, 
+                                        mail.Subject, mail.From.First().Name, $"Error={exception.Message}"));
+                        emailDownloadStatistics.CountEmailsDownloadError++;
+                    }
                 }
                 else if (oldEmail.ExistsOnServer == false)  // Previously downloaded
                 {
@@ -208,7 +217,7 @@ namespace CFEmailManager.EmailConnections.MailKit
                 subFolderNames.Add(subFolder.Name);
 
                 var emailDownloadStatistics2 = DownloadFolder(subFolder, emailRepository, emailFolder, subFolderNames, 
-                            downloadAttachments, cancellationToken, folderStartAction, folderEndAction);
+                            downloadAttachments, topLevelFoldersToIgnore, cancellationToken, folderStartAction, folderEndAction);
 
                 emailDownloadStatistics.AppendFrom(emailDownloadStatistics2);
             }
@@ -235,7 +244,7 @@ namespace CFEmailManager.EmailConnections.MailKit
         /// <param name="downloadAttachments"></param>
         /// <param name="emailFolder"></param>
         /// <param name="emailStorageService"></param>
-        private static EmailObject SaveEmail(MimeMessage email, bool downloadAttachments, EmailFolder emailFolder, IEmailStorageService emailStorageService)
+        private EmailObject SaveEmail(MimeMessage email, bool downloadAttachments, EmailFolder emailFolder, IEmailStorageService emailStorageService)
         {                        
             EmailObject emailObject = new EmailObject()
             {
@@ -263,9 +272,7 @@ namespace CFEmailManager.EmailConnections.MailKit
                 email.WriteTo(stream);
                 stream.Position = 0;
                 content = new byte[stream.Length];
-                stream.Read(content, 0, content.Length);
-
-                int xxxx = 1000;
+                stream.Read(content, 0, content.Length);                
             }
             
             // Download attachments
@@ -296,9 +303,12 @@ namespace CFEmailManager.EmailConnections.MailKit
                         emailObject.Attachments.Add(emailAttachment);
                     }
                 }
-            }
+            }                       
            
             emailStorageService.Update(emailObject, content, attachments);
+
+            _auditLog.Write(InternalUtilities.CreateAuditLogEntry("DOWNLOAD_EMAIL", emailStorageService.EmailAddress, 
+                            emailObject.Subject, emailObject.From.Address, ""));
 
             return emailObject;
         }        

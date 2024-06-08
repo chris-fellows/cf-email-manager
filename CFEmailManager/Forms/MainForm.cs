@@ -112,9 +112,9 @@ namespace CFEmailManager.Forms
                             _downloadEmailsTask = DownloadEmailsAsync(emailAccount, true, true, emailStorageService);
                             _downloadEmailsTask.Wait();                                                        
                         }
-                        catch(Exception exception)
+                        catch
                         {
-
+                            // Ignore
                         }
                     }
                 }
@@ -241,6 +241,7 @@ namespace CFEmailManager.Forms
             var task = _emailDownloader.DownloadEmailsAsync(emailAccount,
                             emailStorageService,
                             downloadAttachments,
+                            new List<string>() { "Spam", "Junk" },    // Ignore these folders
                             (folder) =>     // Action when starting folder download
                             {
                                 this.Invoke((Action)delegate
@@ -285,7 +286,7 @@ namespace CFEmailManager.Forms
                                     emailAccount.TimeLastDownload = DateTimeOffset.UtcNow;
                                     _emailAccountRepository.Update(emailAccount);
 
-                                    DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloaded} emails");                                    
+                                    DisplayStatus($"Downloaded {emailDownloadStatistics.CountEmailsDownloadSuccess} emails");                                    
                                 
                                     if (displayEmailFolders)
                                     {

@@ -24,6 +24,7 @@ namespace CFEmailManager.Services
         public Task<EmailDownloadStatistics> DownloadEmailsAsync(EmailAccount emailAccount,
                         IEmailStorageService emailRepository,
                         bool downloadAttachments,
+                        List<string> topLevelFoldersToIgnore,
                         Action<string> actionFolderStart,
                         Action<string> actionFolderEnd,
                         Action downloadStart,
@@ -46,7 +47,7 @@ namespace CFEmailManager.Services
 
                 // Download                
                 var emailDownloadStatistics = emailConnection.Download(emailAccount.Server, emailAccount.EmailAddress, password,
-                                emailAccount.LocalFolder, downloadAttachments, emailRepository, _downloadTaskTokenSource.Token,
+                                downloadAttachments, topLevelFoldersToIgnore, emailRepository, _downloadTaskTokenSource.Token,
                                 (folder) => // Main thread
                                 {
                                     actionFolderStart(folder);

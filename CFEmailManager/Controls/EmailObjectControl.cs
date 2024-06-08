@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using CFEmailManager.Interfaces;
 using CFEmailManager.Model;
 using CFUtilities;
+using CFUtilities.Models;
 
 namespace CFEmailManager.Controls
 {

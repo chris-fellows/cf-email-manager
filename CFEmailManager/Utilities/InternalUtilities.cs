@@ -1,8 +1,11 @@
 ﻿using MimeKit;
 using CFEmailManager.Model;
+using System.Collections.Generic;
 using System.Text;
 using System;
 using CFUtilities.Encryption;
+using CFUtilities.Models;
+using System.Drawing;
 
 namespace CFEmailManager.Utilities
 {
@@ -95,6 +98,31 @@ namespace CFEmailManager.Utilities
 
             var decrypted = Encoding.UTF8.GetString(AESEncryption.Decrypt(Convert.FromBase64String(setting), key, iv));
             return decrypted;
+        }
+
+        /// <summary>
+        /// Creates audit log entry
+        /// </summary>
+        /// <param name="action"></param>
+        /// <param name="emailAddress"></param>
+        /// <param name="emailSubject"></param>
+        /// <param name="emailFrom"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static LogEntry CreateAuditLogEntry(string action, string emailAddress, string emailSubject, string emailFrom, string data)
+        {
+            return new LogEntry()
+            {
+              Values = new Dictionary<string, object>()
+              {
+                  { "Action", action },
+                  { "Machine", Environment.MachineName },
+                  { "EmailAddress", emailAddress },
+                  { "EmailSubject", emailSubject },
+                  { "EmailFrom", emailFrom },
+                  { "Data", data }
+              }
+            };
         }
     }
 }
